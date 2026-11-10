@@ -20,6 +20,12 @@ import { parseHash } from './ui/router.js';
 import { renderSidebar } from './ui/sidebar.js';
 import { renderTimerBar, runningClock } from './ui/components/timerBar.js';
 import { setTitle, startLiveClock } from './ui/live.js';
+import { closeSlashMenu, initSlashMenu } from './ui/components/slashMenu.js';
+import { initShortcuts } from './ui/shortcuts.js';
+import { promptNewProject } from './ui/views/projects.js';
+import { runSlashCommand } from './ui/views/today.js';
+import { rescheduleTask } from './domain/tasks.js';
+import { formatFriendlyDate } from './utils/dates.js';
 import { applyTheme, watchSystemTheme } from './ui/theme.js';
 import { renderArchive } from './ui/views/archive.js';
 import { renderAnalytics } from './ui/views/analytics.js';
@@ -84,7 +90,11 @@ function render() {
   refreshDrawer();
 }
 
-function handleDrop({ type, id, zoneId, orderedIds }) {
+function handleDrop({ type, id, zoneId, orderedIds, date }) {
+  if (date) {
+    if (type !== 'task') return;
+    return rescheduleTask(id, date).then(() => toast(`Moved to ${formatFriendlyDate(date)}`));
+  }
   if (type === 'task') return orderedIds ? arrangeTasks(zoneId, orderedIds) : moveTaskToGroupEnd(id, zoneId);
   if (type === 'subtask') return arrangeSubtasks(orderedIds);
   if (type === 'group') return arrangeGroups(orderedIds);
@@ -96,7 +106,7 @@ function onKeydown(event) {
   if (document.querySelector('dialog[open]')) return;
 
   if (event.key === 'Escape') {
-    if (closeMenu()) return;
+    if (closeMenu() || closeSlashMenu()) return;
     if (app.classList.contains('sidebar-open')) {
       app.classList.remove('sidebar-open');
       return;
@@ -144,6 +154,10 @@ async function start() {
   bindActions(app);
   initDrawer({ onDrop: handleDrop });
   enableSortable(mainEl, { onDrop: handleDrop, scrollContainer: mainEl });
+  initSlashMenu(app, {
+    onCommand: (command, context) => (command === 'mode-changed' ? render() : runSlashCommand(command, context)),
+  });
+  initShortcuts({ newProject: () => promptNewProject() });
   document.addEventListener('keydown', onKeydown);
   document.getElementById('scrim-nav').addEventListener('click', () => app.classList.remove('sidebar-open'));
 
