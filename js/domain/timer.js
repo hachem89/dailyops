@@ -123,19 +123,27 @@ export async function deleteSession(sessionId) {
   await Promise.all([store.remove('timeSessions', sessionId), session.end == null ? setSetting('timer', null) : null]);
 }
 
-let trackedCache = { version: -1, map: new Map() };
+let trackingCache = { version: -1, finished: new Map(), open: null };
 
-// Finished time per task, cached until the store changes. The running
-// session is excluded; callers add it live.
-export function finishedMsByTask() {
-  if (trackedCache.version !== store.currentVersion()) {
-    const map = new Map();
+// Finished time per task plus the running session, cached until the store
+// changes. Callers add the running session's elapsed time live.
+export function trackingIndex() {
+  if (trackingCache.version !== store.currentVersion()) {
+    const finished = new Map();
+    let open = null;
     for (const s of store.all('timeSessions')) {
-      if (s.taskId && s.end != null) map.set(s.taskId, (map.get(s.taskId) || 0) + sessionMs(s));
+      if (s.end == null) open = s;
+      else if (s.taskId) finished.set(s.taskId, (finished.get(s.taskId) || 0) + sessionMs(s));
     }
-    trackedCache = { version: store.currentVersion(), map };
+    trackingCache = { version: store.currentVersion(), finished, open };
   }
-  return trackedCache.map;
+  return trackingCache;
+}
+
+export function finishedMs(target) {
+  return sessionsFor(target)
+    .filter((s) => s.end != null)
+    .reduce((sum, s) => sum + sessionMs(s), 0);
 }
 
 export function totalMs(target, now = Date.now()) {

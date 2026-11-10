@@ -37,6 +37,9 @@ const PATHS = {
   repeat: '<path d="M17 2.5l3 3-3 3"/><path d="M4 11.5v-1a5 5 0 0 1 5-5h11"/><path d="M7 21.5l-3-3 3-3"/><path d="M20 12.5v1a5 5 0 0 1-5 5H4"/>',
   skip: '<path d="M5 5l9 7-9 7z"/><path d="M18 5v14"/>',
   back: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+  play: '<path d="M7 5l12 7-12 7z"/>',
+  pause: '<path d="M8 5v14M16 5v14"/>',
+  stop: '<rect x="6" y="6" width="12" height="12" rx="1.5"/>',
   timer: '<circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2 1.5M10 3h4"/>',
 };
 
