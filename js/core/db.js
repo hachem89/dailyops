@@ -2,9 +2,9 @@
 // existing users are upgraded step by step when DB_VERSION increases.
 
 const DB_NAME = 'dailyops';
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 
-export const STORES = ['tasks', 'groups', 'categories', 'settings', 'projects', 'projectSubtasks', 'recurrenceRules'];
+export const STORES = ['tasks', 'groups', 'categories', 'settings', 'projects', 'projectSubtasks', 'recurrenceRules', 'timeSessions'];
 
 const MIGRATIONS = {
   1(db) {
@@ -32,6 +32,15 @@ const MIGRATIONS = {
     const tasks = tx.objectStore('tasks');
     tasks.createIndex('projectId', 'projectId');
     tasks.createIndex('recurrenceRuleId', 'recurrenceRuleId');
+  },
+
+  // Time tracking. Each session is one interval of work on a task or project;
+  // the running timer is the session whose `end` is null.
+  3(db) {
+    const sessions = db.createObjectStore('timeSessions', { keyPath: 'id' });
+    sessions.createIndex('taskId', 'taskId');
+    sessions.createIndex('projectId', 'projectId');
+    sessions.createIndex('date', 'date');
   },
 };
 
