@@ -90,6 +90,24 @@ export function formatTimestamp(iso) {
   });
 }
 
+// "1h 05m", "12m", "<1m" — for tracked time.
+export function formatMs(ms) {
+  const minutes = Math.floor(ms / 60000);
+  if (ms > 0 && minutes === 0) return '<1m';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return h ? `${h}h ${String(m).padStart(2, '0')}m` : `${m}m`;
+}
+
+// "1:05:09" — for a running timer.
+export function formatClock(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
 export function formatDuration(minutes) {
   if (minutes == null || Number.isNaN(minutes)) return '';
   const h = Math.floor(minutes / 60);

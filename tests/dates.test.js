@@ -54,3 +54,11 @@ test('formatDuration renders hours and minutes', () => {
   assert.equal(formatDuration(60), '1h');
   assert.equal(formatDuration(95), '1h 35m');
 });
+
+test('formatMs and formatClock render tracked time', async () => {
+  const { formatMs, formatClock } = await import('../js/utils/dates.js');
+  assert.equal(formatMs(0), '0m');
+  assert.equal(formatMs(20000), '<1m');
+  assert.equal(formatMs(65 * 60000), '1h 05m');
+  assert.equal(formatClock(3909000), '1:05:09');
+});

@@ -11,6 +11,7 @@ import { renameProjectSubtask, setProjectSubtaskStatus } from './projectLinks.js
 import { applyTemplateChange, setRuleGroup } from './repeat.js';
 import { STATUS, containerTasks, isGroupVisibleOn, subtasksOf } from './taskQueries.js';
 import { taskRecord } from './taskRecord.js';
+import { stopTimerIfTarget } from './timer.js';
 
 const allTasks = () => store.all('tasks');
 const allGroups = () => store.all('groups');
@@ -157,6 +158,11 @@ export async function deleteTask(id) {
   const task = getTask(id);
   if (!task) return [];
   const removed = [task, ...allTasks().filter((t) => t.parentTaskId === id)];
+  // Time sessions are kept (undo relinks them); only a running timer stops.
+  await stopTimerIfTarget(
+    'task',
+    removed.map((t) => t.id),
+  );
   await store.remove(
     'tasks',
     removed.map((t) => t.id),
