@@ -49,3 +49,15 @@ test('slash commands match by name, word or keyword', () => {
   assert.deepEqual(matchCommands('p').map((c) => c.id), ['project']);
   assert.deepEqual(matchCommands('zzz'), []);
 });
+
+test('a repeating task appears once, as the occurrence closest to today', () => {
+  const tasks = ['2026-11-08', '2026-11-11', '2026-11-14'].map((date) => ({
+    id: `r@${date}`,
+    title: 'Read Quran',
+    recurrenceRuleId: 'r',
+    scheduledDate: date,
+    status: 'open',
+  }));
+  const results = search({ tasks }, 'quran', { today: '2026-11-12' });
+  assert.deepEqual(results.map((r) => r.item.id), ['r@2026-11-11']);
+});
