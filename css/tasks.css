@@ -1455,3 +1455,112 @@ body.is-dragging * {
     display: none;
   }
 }
+
+/* Islamic reminders */
+.reminder {
+  margin: 0;
+  padding: 12px 14px 10px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+}
+
+.reminder-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.reminder-text {
+  margin: 0;
+  font-family: var(--font-arabic);
+  font-size: 21px;
+  line-height: 2;
+  text-align: right;
+  color: var(--text);
+  overflow-wrap: break-word;
+}
+
+.reminder-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.reminder-ref {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.reminder-ref:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.reminder-meta {
+  color: var(--text-faint);
+  flex: 1;
+  min-width: 0;
+}
+
+.reminder-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.reminder-check input {
+  accent-color: var(--ok);
+}
+
+.reminder.is-checked .reminder-text {
+  color: var(--text-muted);
+}
+
+.reminder.compact {
+  padding: 6px 12px 6px;
+  background: transparent;
+  border-style: dashed;
+}
+
+.reminder.compact .reminder-text {
+  font-size: 18px;
+  line-height: 1.9;
+}
+
+.task-block > .reminder.compact {
+  margin: 0 0 6px 46px;
+}
+
+.view-header + .reminder.compact,
+.notice + .reminder.compact {
+  margin-bottom: 4px;
+}
+
+.reminder-after {
+  border-color: color-mix(in srgb, var(--ok) 35%, var(--border));
+}
+
+.drawer-body > .reminder {
+  margin-top: -4px;
+}
+
+@media (max-width: 768px) {
+  .task-block > .reminder.compact {
+    margin-left: 28px;
+  }
+
+  .reminder-text {
+    font-size: 19px;
+  }
+}

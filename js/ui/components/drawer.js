@@ -19,6 +19,8 @@ import { enableSortable } from '../dnd.js';
 import { icon } from '../icons.js';
 import { renderSubtaskList } from './taskRow.js';
 import { renderTimeSection } from './timeSection.js';
+import { renderReminder } from './reminderCard.js';
+import { assignReminder, reminderItem } from '../../domain/reminders.js';
 
 let currentId = null;
 let deferred = false;
@@ -43,6 +45,8 @@ export function openTask(id) {
   if (!currentId) returnFocus = document.activeElement;
   currentId = id;
   deferred = false;
+  // Opening a task is a natural moment to begin it: give it its reminder.
+  assignReminder(id, 'before').catch(() => {});
   // Visible before rendering so the title can measure its height.
   root().hidden = false;
   render();
@@ -364,6 +368,22 @@ function render() {
           ? null
           : h('button', { type: 'button', class: 'btn btn-sm btn-ghost btn-danger', dataset: { action: 'delete-task', id: task.id } }, icon('trash'), 'Delete'),
       ),
+      !isSub
+        ? renderReminder(reminderItem(task.reminders?.before?.itemId), {
+            checked: !!task.reminders?.before?.checked,
+            target: { taskId: task.id, moment: 'before' },
+            label: 'Before you begin',
+            keyPrefix: 'd:',
+          })
+        : null,
+      !isSub && done
+        ? renderReminder(reminderItem(task.reminders?.after?.itemId), {
+            checked: !!task.reminders?.after?.checked,
+            target: { taskId: task.id, moment: 'after' },
+            label: 'After completing',
+            keyPrefix: 'd:',
+          })
+        : null,
       h('div', { class: 'props' }, props),
       renderTimeSection({ type: 'task', id: task.id, estimateMinutes: task.estimatedDuration }, { keyPrefix: 'd:' }),
       h(
