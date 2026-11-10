@@ -105,9 +105,13 @@ export async function setRepeat(taskId, pattern, { untilProjectDone } = {}) {
     createdAt: now,
     updatedAt: now,
   };
-  await store.put('recurrenceRules', rule);
-  // The task itself becomes the first occurrence.
-  await store.put('tasks', { ...task, recurrenceRuleId: rule.id, occurrenceDate: startDate, updatedAt: now });
+  // The task itself becomes the first occurrence. Both records are written in
+  // the same tick: a render in between would see the rule without its first
+  // occurrence and generate a duplicate for that date.
+  await Promise.all([
+    store.put('tasks', { ...task, recurrenceRuleId: rule.id, occurrenceDate: startDate, updatedAt: now }),
+    store.put('recurrenceRules', rule),
+  ]);
 }
 
 // Ends the series. Past and current occurrences stay as history; `task` itself
@@ -119,11 +123,18 @@ export async function stopRepeating(taskId) {
   const today = todayKey();
   const endDate = task.occurrenceDate >= today ? addDays(task.occurrenceDate, -1) : today;
   const now = nowIso();
-  await store.put('tasks', { ...task, recurrenceRuleId: null, occurrenceDate: null, updatedAt: now });
+  const stillUsed = store.all('tasks').some((t) => t.recurrenceRuleId === rule.id && t.id !== task.id);
+  // Detach the task and end the rule in the same tick, so no render sees an
+  // active rule without this date's occurrence and regenerates it.
+  await Promise.all([
+    store.put('tasks', { ...task, recurrenceRuleId: null, occurrenceDate: null, updatedAt: now }),
+    stillUsed ? store.put('recurrenceRules', { ...rule, endDate, updatedAt: now }) : store.remove('recurrenceRules', rule.id),
+  ]);
   await pruneOccurrences(rule.id, endDate, task.id);
-  const stillUsed = store.all('tasks').some((t) => t.recurrenceRuleId === rule.id);
-  if (stillUsed) await store.put('recurrenceRules', { ...rule, endDate, updatedAt: now });
-  else await store.remove('recurrenceRules', rule.id);
+  // Pruning may have removed the last occurrence; an ended, unused rule is dropped.
+  if (stillUsed && !store.all('tasks').some((t) => t.recurrenceRuleId === rule.id)) {
+    await store.remove('recurrenceRules', rule.id);
+  }
 }
 
 // Applies template-field edits made on one occurrence to its series and to the
