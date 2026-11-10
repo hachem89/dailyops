@@ -2,12 +2,15 @@
 // so these functions can be unit-tested in Node.
 import { byOrder } from './ordering.js';
 
-export const STATUS = Object.freeze({ OPEN: 'open', DONE: 'done', CANCELLED: 'cancelled' });
+// 'skipped' applies only to recurring occurrences the user chose not to do.
+export const STATUS = Object.freeze({ OPEN: 'open', DONE: 'done', CANCELLED: 'cancelled', SKIPPED: 'skipped' });
 
 export const isTopLevel = (task) => !task.parentTaskId;
 export const isOpen = (task) => task.status === STATUS.OPEN;
 export const isDone = (task) => task.status === STATUS.DONE;
 export const isCancelled = (task) => task.status === STATUS.CANCELLED;
+export const isSkipped = (task) => task.status === STATUS.SKIPPED;
+export const isRecurring = (task) => !!task.recurrenceRuleId;
 
 export function topLevelForDate(tasks, date) {
   return tasks.filter((t) => isTopLevel(t) && t.scheduledDate === date);
@@ -19,8 +22,14 @@ export function subtasksOf(tasks, parentId) {
 
 // A top-level task is overdue when it is still open and its scheduled date has
 // passed. It stays attached to its original date until the user moves it.
+// Recurring occurrences are never overdue: a past open occurrence is "missed",
+// and missing one has no effect on the following ones.
 export function isOverdue(task, today) {
-  return isTopLevel(task) && isOpen(task) && !!task.scheduledDate && task.scheduledDate < today;
+  return isTopLevel(task) && isOpen(task) && !isRecurring(task) && !!task.scheduledDate && task.scheduledDate < today;
+}
+
+export function isMissed(task, today) {
+  return isRecurring(task) && isOpen(task) && !!task.scheduledDate && task.scheduledDate < today;
 }
 
 export function overdueTasks(tasks, today) {
@@ -62,9 +71,9 @@ export function byExecutionTime(a, b) {
   return byOrder(a, b);
 }
 
-// Cancelled tasks are excluded: they are neither done nor remaining.
+// Cancelled tasks and skipped occurrences are excluded: neither done nor remaining.
 export function dayProgress(tasks, date) {
-  const relevant = topLevelForDate(tasks, date).filter((t) => !isCancelled(t));
+  const relevant = topLevelForDate(tasks, date).filter((t) => !isCancelled(t) && !isSkipped(t));
   const done = relevant.filter(isDone).length;
   return { done, total: relevant.length };
 }
