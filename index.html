@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>DailyOps</title>
+    <meta name="description" content="A privacy-first personal execution workspace. Your tasks stay in your browser." />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+    <script>
+      // Apply the saved theme before first paint to avoid a flash.
+      (function () {
+        var pref = 'system';
+        try {
+          pref = localStorage.getItem('dailyops.theme') || 'system';
+        } catch (e) {}
+        var dark = pref === 'dark' || (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      })();
+    </script>
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/tasks.css" />
+    <script type="module" src="js/main.js"></script>
+  </head>
+  <body>
+    <div class="app" id="app">
+      <aside class="sidebar" id="sidebar" aria-label="Sidebar"></aside>
+      <div class="scrim scrim-nav" id="scrim-nav"></div>
+      <main class="main" id="main" tabindex="-1">
+        <div class="topbar">
+          <button type="button" class="icon-btn" aria-label="Open navigation" data-action="open-sidebar">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+          </button>
+          <span>DailyOps</span>
+        </div>
+        <div id="view-root">
+          <div class="view"><p class="faint">Loading…</p></div>
+        </div>
+      </main>
+      <div class="scrim" id="scrim"></div>
+      <aside class="drawer" id="drawer" role="dialog" aria-label="Task details" hidden></aside>
+    </div>
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+    <noscript>DailyOps needs JavaScript to run. All data stays in your browser.</noscript>
+  </body>
+</html>

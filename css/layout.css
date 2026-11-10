@@ -1,0 +1,277 @@
+.app {
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-w);
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-subtle);
+  border-right: 1px solid var(--border);
+  transition: width 0.18s var(--ease);
+  overflow: hidden;
+}
+
+.sidebar-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 10px 8px 14px;
+  min-height: 52px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.brand img {
+  width: 22px;
+  height: 22px;
+  flex: none;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 8px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 14px;
+  white-space: nowrap;
+  text-align: left;
+  width: 100%;
+  transition: background 0.12s;
+}
+
+.nav-link:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.nav-link[aria-current='page'] {
+  background: var(--bg-active);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.nav-link .label {
+  flex: 1;
+}
+
+.nav-badge {
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  text-align: center;
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.sidebar-foot {
+  margin-top: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-note {
+  font-size: 12px;
+  color: var(--text-faint);
+  padding: 6px 8px;
+  line-height: 1.4;
+}
+
+.app.sidebar-collapsed .sidebar {
+  width: var(--sidebar-w-collapsed);
+}
+
+.app.sidebar-collapsed .sidebar .label,
+.app.sidebar-collapsed .sidebar .brand span,
+.app.sidebar-collapsed .sidebar .nav-badge,
+.app.sidebar-collapsed .sidebar .sidebar-note {
+  display: none;
+}
+
+.app.sidebar-collapsed .sidebar-head {
+  flex-direction: column;
+  padding: 12px 8px 8px;
+}
+
+.app.sidebar-collapsed .brand {
+  justify-content: center;
+}
+
+.app.sidebar-collapsed .nav-link {
+  justify-content: center;
+}
+
+/* Main */
+.main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  position: relative;
+}
+
+.main:focus {
+  outline: none;
+}
+
+.topbar {
+  display: none;
+}
+
+.view {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 40px 48px 120px;
+}
+
+.view-header {
+  margin-bottom: 20px;
+}
+
+.view-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.view-subtitle {
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+/* Drawer */
+.drawer {
+  width: var(--drawer-w);
+  flex: none;
+  border-left: 1px solid var(--border);
+  background: var(--bg);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.scrim {
+  display: none;
+}
+
+/* Tablet */
+@media (max-width: 1100px) {
+  .drawer {
+    position: fixed;
+    inset: 0 0 0 auto;
+    width: min(var(--drawer-w), 100vw);
+    z-index: 40;
+    box-shadow: var(--shadow);
+    animation: drawer-in 0.18s var(--ease);
+  }
+
+  .scrim.visible {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 15, 15, 0.3);
+    z-index: 35;
+  }
+}
+
+@keyframes drawer-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    width: 260px;
+    transform: translateX(-100%);
+    transition: transform 0.2s var(--ease);
+    box-shadow: var(--shadow);
+  }
+
+  .app.sidebar-open .sidebar {
+    transform: none;
+  }
+
+  .app.sidebar-collapsed .sidebar {
+    width: 260px;
+  }
+
+  .app.sidebar-collapsed .sidebar .label,
+  .app.sidebar-collapsed .sidebar .brand span,
+  .app.sidebar-collapsed .sidebar .nav-badge,
+  .app.sidebar-collapsed .sidebar .sidebar-note {
+    display: revert;
+  }
+
+  .app.sidebar-open .scrim-nav {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 15, 15, 0.3);
+    z-index: 45;
+  }
+
+  .sidebar-collapse-btn {
+    display: none;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding: 8px 12px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+  }
+
+  .view {
+    padding: 20px 16px 120px;
+  }
+
+  .view-title {
+    font-size: 24px;
+  }
+
+  .drawer {
+    width: 100vw;
+    border-left: 0;
+  }
+}
