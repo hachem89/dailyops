@@ -8,7 +8,7 @@ import { sortByOrder } from '../../domain/ordering.js';
 import { effectivePriority, priorityInfo } from '../../domain/priorities.js';
 import { PROJECT_STATUS_LABELS, SUBTASK_STATUS, isProjectOpen, projectSubtaskPriority } from '../../domain/projectQueries.js';
 import { getSetting } from '../../domain/settings.js';
-import { STATUS, subtasksOf, topLevelForDate } from '../../domain/taskQueries.js';
+import { STATUS, isTaskItem, subtasksOf, topLevelForDate } from '../../domain/taskQueries.js';
 import { registerActions, ui } from '../actions.js';
 import { renderTaskBlock } from '../components/taskRow.js';
 import { icon } from '../icons.js';
@@ -108,7 +108,7 @@ export function renderUpcoming(root) {
   const days = [];
   for (let i = 1; i <= DAYS_AHEAD; i++) {
     const date = addDays(today, i);
-    const list = sortByOrder(topLevelForDate(tasks, date).filter((t) => t.status === STATUS.OPEN));
+    const list = sortByOrder(topLevelForDate(tasks, date).filter((t) => isTaskItem(t) && t.status === STATUS.OPEN));
     if (list.length) days.push({ date, list });
   }
 

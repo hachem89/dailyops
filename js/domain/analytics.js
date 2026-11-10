@@ -2,7 +2,7 @@
 // number on the dashboard can be reproduced in unit tests.
 import { addDays, diffDays, parseDateKey } from '../utils/dates.js';
 import { occurrenceKey, occursOn } from './recurrence.js';
-import { STATUS, isTopLevel } from './taskQueries.js';
+import { STATUS, isTaskItem, isTopLevel } from './taskQueries.js';
 
 // ------------------------------------------------------------------ periods
 
@@ -66,6 +66,7 @@ export function executionStats(tasks, range, today, { categoryId = null } = {}) 
   const scoped = tasks.filter(
     (t) =>
       isTopLevel(t) &&
+      isTaskItem(t) &&
       inRange(t.scheduledDate, range) &&
       matchesCategory(t.categoryId, categoryId) &&
       !(t.recurrenceRuleId && t.scheduledDate > today),
@@ -195,7 +196,7 @@ export function habitStats(rule, occurrences, range, today) {
 
 export function postponementStats(tasks, { categoryId = null } = {}) {
   return tasks
-    .filter((t) => isTopLevel(t) && (t.rescheduleHistory || []).length && matchesCategory(t.categoryId, categoryId))
+    .filter((t) => isTopLevel(t) && isTaskItem(t) && (t.rescheduleHistory || []).length && matchesCategory(t.categoryId, categoryId))
     .map((t) => {
       const history = t.rescheduleHistory;
       return {
@@ -211,7 +212,7 @@ export function postponementStats(tasks, { categoryId = null } = {}) {
 
 export function overdueWork(tasks, today, { categoryId = null } = {}) {
   return tasks
-    .filter((t) => isTopLevel(t) && t.status === STATUS.OPEN && !t.recurrenceRuleId && t.scheduledDate && t.scheduledDate < today)
+    .filter((t) => isTopLevel(t) && isTaskItem(t) && t.status === STATUS.OPEN && !t.recurrenceRuleId && t.scheduledDate && t.scheduledDate < today)
     .filter((t) => matchesCategory(t.categoryId, categoryId))
     .map((t) => ({ task: t, daysOverdue: diffDays(t.scheduledDate, today) }))
     .sort((a, b) => b.daysOverdue - a.daysOverdue);

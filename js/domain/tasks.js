@@ -28,9 +28,11 @@ export function createTask({
   priority,
   projectId = null,
   projectSubtaskId = null,
+  kind = 'task',
 }) {
   const trimmed = (title || '').trim();
-  if (!trimmed) return Promise.resolve(null);
+  if (!trimmed && kind !== 'divider') return Promise.resolve(null);
+  if (kind !== 'task' && parentTaskId) return Promise.resolve(null);
 
   const parent = parentTaskId ? getTask(parentTaskId) : null;
   if (parentTaskId && !parent) return Promise.resolve(null);
@@ -40,6 +42,7 @@ export function createTask({
     : containerTasks(allTasks(), allGroups(), scheduledDate, groupId);
 
   const task = taskRecord({
+    kind: ['heading', 'divider'].includes(kind) ? kind : 'task',
     title: trimmed,
     // Subtasks follow their parent's date, group and (by default) priority.
     scheduledDate: parent ? null : scheduledDate,

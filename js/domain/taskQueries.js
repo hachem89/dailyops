@@ -6,6 +6,13 @@ import { byOrder } from './ordering.js';
 export const STATUS = Object.freeze({ OPEN: 'open', DONE: 'done', CANCELLED: 'cancelled', SKIPPED: 'skipped' });
 
 export const isTopLevel = (task) => !task.parentTaskId;
+
+// List items are tasks unless they are layout blocks (a heading or a divider
+// created with the slash menu). Blocks are ordered with tasks but never count
+// as work: no progress, overdue, analytics or reminders.
+export const BLOCK_KINDS = ['heading', 'divider'];
+export const isBlock = (item) => BLOCK_KINDS.includes(item.kind);
+export const isTaskItem = (item) => !isBlock(item);
 export const isOpen = (task) => task.status === STATUS.OPEN;
 export const isDone = (task) => task.status === STATUS.DONE;
 export const isCancelled = (task) => task.status === STATUS.CANCELLED;
@@ -25,7 +32,7 @@ export function subtasksOf(tasks, parentId) {
 // Recurring occurrences are never overdue: a past open occurrence is "missed",
 // and missing one has no effect on the following ones.
 export function isOverdue(task, today) {
-  return isTopLevel(task) && isOpen(task) && !isRecurring(task) && !!task.scheduledDate && task.scheduledDate < today;
+  return isTopLevel(task) && isTaskItem(task) && isOpen(task) && !isRecurring(task) && !!task.scheduledDate && task.scheduledDate < today;
 }
 
 export function isMissed(task, today) {
@@ -73,7 +80,7 @@ export function byExecutionTime(a, b) {
 
 // Cancelled tasks and skipped occurrences are excluded: neither done nor remaining.
 export function dayProgress(tasks, date) {
-  const relevant = topLevelForDate(tasks, date).filter((t) => !isCancelled(t) && !isSkipped(t));
+  const relevant = topLevelForDate(tasks, date).filter((t) => isTaskItem(t) && !isCancelled(t) && !isSkipped(t));
   const done = relevant.filter(isDone).length;
   return { done, total: relevant.length };
 }

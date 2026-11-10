@@ -129,3 +129,12 @@ test('past open occurrences are missed, not overdue', () => {
   assert.equal(isMissed({ ...occurrence, status: 'done' }, '2026-11-10'), false);
   assert.equal(isMissed(task('plain', { scheduledDate: '2026-11-08' }), '2026-11-10'), false);
 });
+
+test('heading and divider blocks never count as work', async () => {
+  const { isTaskItem, isBlock } = await import('../js/domain/taskQueries.js');
+  const heading = task('h', { kind: 'heading', scheduledDate: '2026-11-08' });
+  const divider = task('d', { kind: 'divider' });
+  assert.ok(isBlock(heading) && isBlock(divider) && isTaskItem(task('t')));
+  assert.deepEqual(overdueTasks([heading], '2026-11-10'), []);
+  assert.deepEqual(dayProgress([divider, task('x', { status: 'done' })], '2026-11-10'), { done: 1, total: 1 });
+});
