@@ -109,6 +109,33 @@ exact excerpt of its source:
 node scripts/fetch-islamic-sources.mjs
 ```
 
+### Productivity interactions (Phase 5)
+
+- **Slash commands**: type `/` in the quick-add or a group's *Add task* row for a
+  small menu — Task, Task group, Project, Heading, Divider. Arrow keys move, Enter
+  selects, Esc closes. Text after the command becomes the name
+  (`/project Thesis`). Headings and dividers are reorderable list blocks that
+  never count as tasks
+- **Global search** (`Ctrl/⌘ + K`, or *Search* in the sidebar) across tasks,
+  subtasks, projects and project subtasks; a repeating task appears once
+- **Drop to reschedule**: drag a task onto the previous/next day arrows, *Today*,
+  *Tomorrow* or the sidebar's *Today*
+- **Keyboard shortcuts** (single keys are ignored while typing):
+
+  | Keys | Action |
+  | --- | --- |
+  | `Ctrl/⌘ + K` | Search |
+  | `N` | New task (`Ctrl + N` where the browser allows it) |
+  | `Shift + N` | New project (`Ctrl + Shift + N` where the browser allows it) |
+  | `/` | New task with the command menu |
+  | `T` | Go to Today |
+  | `Alt + ↑/↓` | Move the focused task, subtask or group |
+  | `Esc` | Close menus, dialogs and task details |
+  | `?` | Show shortcuts |
+
+  Browsers reserve `Ctrl + N` and `Ctrl + Shift + N` for new windows and do not
+  let web pages override them, so `N` and `Shift + N` are the dependable versions.
+
 ## Your data
 
 - Everything is stored locally in IndexedDB. Nothing about your tasks is sent anywhere.
@@ -158,5 +185,5 @@ scripts/serve.mjs     Zero-dependency local dev server
 2. ~~Projects and recurrence~~ — done
 3. ~~Time tracking and analytics~~ — done
 4. ~~Islamic reminders~~ — done
-5. Slash commands, global search and keyboard shortcuts
+5. ~~Slash commands, global search and keyboard shortcuts~~ — done
 6. Backup/restore, migrations, deployment to GitHub Pages
