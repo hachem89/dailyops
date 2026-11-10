@@ -49,13 +49,16 @@ export function confirmDialog({ title, message, confirmLabel = 'Confirm', danger
   }).then(Boolean);
 }
 
-// fields: [{ name, label, type: 'text' | 'radio', value, placeholder, required, options: [{value,label,hint}] }]
+// fields: [{ name, label, type: 'text' | 'radio' | 'select' | 'number' | 'checkboxes', value, placeholder,
+//           required, hint, min, max, options: [{ value, label, hint }] }]
 export function formDialog({ title, description, fields, submitLabel = 'Save' }) {
   return showDialog((finish) => {
     const form = h('form', { method: 'dialog' });
     form.addEventListener('submit', (event) => {
       event.preventDefault();
-      const data = Object.fromEntries(new FormData(form).entries());
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+      fields.filter((f) => f.type === 'checkboxes').forEach((f) => (data[f.name] = formData.getAll(f.name)));
       for (const field of fields) {
         if (field.required && !String(data[field.name] ?? '').trim()) {
           form.elements[field.name]?.focus?.();
@@ -82,6 +85,43 @@ export function formDialog({ title, description, fields, submitLabel = 'Save' })
                 h('span', null, option.label, option.hint ? h('small', null, option.hint) : null),
               ),
             ),
+          );
+        }
+        if (field.type === 'checkboxes') {
+          return h(
+            'fieldset',
+            { class: 'checkbox-row', style: { border: 0, padding: 0, margin: 0 } },
+            h('legend', { class: 'field-label' }, field.label),
+            field.options.map((option) =>
+              h(
+                'label',
+                { class: 'checkbox-pill' },
+                h('input', { type: 'checkbox', name: field.name, value: option.value, checked: (field.value || []).includes(option.value) }),
+                h('span', null, option.label),
+              ),
+            ),
+            field.hint ? h('small', { class: 'faint', style: { display: 'block', marginTop: '4px' } }, field.hint) : null,
+          );
+        }
+        if (field.type === 'select') {
+          return h(
+            'label',
+            null,
+            h('span', { class: 'field-label' }, field.label),
+            h(
+              'select',
+              { class: 'select', name: field.name },
+              field.options.map((option) => h('option', { value: option.value, selected: option.value === field.value }, option.label)),
+            ),
+          );
+        }
+        if (field.type === 'number') {
+          return h(
+            'label',
+            null,
+            h('span', { class: 'field-label' }, field.label),
+            h('input', { class: 'input', type: 'number', name: field.name, value: field.value ?? '', min: field.min, max: field.max, style: { maxWidth: '140px' } }),
+            field.hint ? h('small', { class: 'faint', style: { display: 'block', marginTop: '4px' } }, field.hint) : null,
           );
         }
         return h(

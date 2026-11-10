@@ -8,6 +8,7 @@ export function parseHash(hash = location.hash) {
   if (name === 'day' && isDateKey(param)) {
     return param === todayKey() ? { name: 'today' } : { name: 'day', date: param };
   }
+  if (name === 'projects' && param) return { name: 'project', id: decodeURIComponent(param) };
   return SIMPLE_ROUTES.has(name) ? { name } : { name: 'today' };
 }
 
@@ -18,5 +19,7 @@ export function navigate(href) {
 
 // The sidebar entry a route belongs to.
 export function navSection(route) {
-  return route.name === 'day' ? 'today' : route.name;
+  if (route.name === 'day') return 'today';
+  if (route.name === 'project') return 'projects';
+  return route.name;
 }

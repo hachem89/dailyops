@@ -34,6 +34,9 @@ const PATHS = {
   subtask: '<path d="M6 4v10a3 3 0 0 0 3 3h9M15 14l3 3-3 3"/>',
   device: '<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>',
   tag: '<path d="M3.5 12.5V4.5a1 1 0 0 1 1-1h8l8 8-9 9z"/><circle cx="8" cy="8" r="1.3"/>',
+  repeat: '<path d="M17 2.5l3 3-3 3"/><path d="M4 11.5v-1a5 5 0 0 1 5-5h11"/><path d="M7 21.5l-3-3 3-3"/><path d="M20 12.5v1a5 5 0 0 1-5 5H4"/>',
+  skip: '<path d="M5 5l9 7-9 7z"/><path d="M18 5v14"/>',
+  back: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
   timer: '<circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2 1.5M10 3h4"/>',
 };
 

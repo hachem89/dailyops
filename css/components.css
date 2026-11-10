@@ -215,6 +215,16 @@
   color: var(--danger);
 }
 
+.chip-missed {
+  color: var(--text-faint);
+  border: 1px dashed var(--border-strong);
+  line-height: 16px;
+}
+
+.chip-project {
+  color: var(--accent);
+}
+
 .chip-cancelled {
   background: var(--bg-active);
 }

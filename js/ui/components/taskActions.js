@@ -11,7 +11,9 @@ import {
   setStatus,
   toggleComplete,
 } from '../../domain/tasks.js';
+import { stopRepeating } from '../../domain/repeat.js';
 import { registerActions, ui } from '../actions.js';
+import { navigate } from '../router.js';
 import { openMenu } from './menu.js';
 import { toast } from './toast.js';
 import { composer } from './taskRow.js';
@@ -26,6 +28,11 @@ export async function deleteWithUndo(id) {
     onAction: () => restoreTasks(removed),
     duration: 7000,
   });
+}
+
+export async function stopRepeatingWithNotice(id) {
+  await stopRepeating(id);
+  toast('Stopped repeating. Past occurrences are kept as history.');
 }
 
 export function startSubtaskComposer(taskId) {
@@ -52,11 +59,21 @@ function taskMenuItems(task) {
         icon: 'arrowRight',
         onSelect: () => rescheduleTask(task.id, tomorrow),
       },
+    task.projectId && { label: 'Open project', icon: 'projects', onSelect: () => navigate(`#/projects/${task.projectId}`) },
     { separator: true },
-    task.status === STATUS.CANCELLED
-      ? { label: 'Restore task', icon: 'undo', onSelect: () => setStatus(task.id, STATUS.OPEN) }
-      : { label: 'Cancel task', icon: 'ban', onSelect: () => setStatus(task.id, STATUS.CANCELLED) },
-    { label: 'Delete', icon: 'trash', danger: true, onSelect: () => deleteWithUndo(task.id) },
+    ...(task.recurrenceRuleId
+      ? [
+          task.status === STATUS.SKIPPED
+            ? { label: 'Undo skip', icon: 'undo', onSelect: () => setStatus(task.id, STATUS.OPEN) }
+            : task.status === STATUS.OPEN && { label: 'Skip this time', icon: 'skip', onSelect: () => setStatus(task.id, STATUS.SKIPPED) },
+          { label: 'Stop repeating', icon: 'repeat', onSelect: () => stopRepeatingWithNotice(task.id) },
+        ]
+      : [
+          task.status === STATUS.CANCELLED
+            ? { label: 'Restore task', icon: 'undo', onSelect: () => setStatus(task.id, STATUS.OPEN) }
+            : { label: 'Cancel task', icon: 'ban', onSelect: () => setStatus(task.id, STATUS.CANCELLED) },
+          { label: 'Delete', icon: 'trash', danger: true, onSelect: () => deleteWithUndo(task.id) },
+        ]),
   ];
 }
 
@@ -67,6 +84,7 @@ registerActions({
   'toggle-section': (el) => toggleCollapsed(el.dataset.key),
   'cancel-task': (el) => setStatus(el.dataset.id, STATUS.CANCELLED),
   'restore-task': (el) => setStatus(el.dataset.id, STATUS.OPEN),
+  'skip-task': (el) => setStatus(el.dataset.id, STATUS.SKIPPED),
   'delete-task': (el) => deleteWithUndo(el.dataset.id),
   'task-menu': (el) => {
     const task = getTask(el.dataset.id);

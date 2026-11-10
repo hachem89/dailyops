@@ -4,7 +4,10 @@ import { formatDuration, formatFriendlyDate } from '../../utils/dates.js';
 import { deadlineLabel, deadlineStatus } from '../../domain/deadlines.js';
 import { effectivePriority, priorityInfo } from '../../domain/priorities.js';
 import { isCollapsed } from '../../domain/settings.js';
-import { STATUS, isOverdue } from '../../domain/taskQueries.js';
+import { STATUS, isMissed, isOverdue } from '../../domain/taskQueries.js';
+import { describeRule } from '../../domain/recurrence.js';
+import { getRule } from '../../domain/repeat.js';
+import * as store from '../../core/store.js';
 import { icon } from '../icons.js';
 
 // A task whose subtask composer is open even though it has no subtasks yet.
@@ -38,6 +41,16 @@ function metaChips(task, ctx, { parent, subtasks }) {
   const isSub = !!parent;
 
   if (task.status === STATUS.CANCELLED) chips.push(chip('chip-cancelled', 'ban', 'Cancelled'));
+  if (task.status === STATUS.SKIPPED) chips.push(chip('chip-cancelled', 'skip', 'Skipped'));
+  if (!isSub && isMissed(task, ctx.today)) chips.push(chip('chip-missed', null, 'Missed', 'This occurrence was not completed. Later occurrences are unaffected.'));
+
+  const rule = !isSub && task.recurrenceRuleId ? getRule(task.recurrenceRuleId) : null;
+  if (rule) chips.push(chip('', 'repeat', describeRule({ ...rule, untilProjectDone: false }), describeRule(rule)));
+
+  const project = !isSub && task.projectId ? store.get('projects', task.projectId) : null;
+  if (project) {
+    chips.push(chip('chip-project', 'projects', project.name, task.projectSubtaskId ? 'Project subtask' : 'Project work (completing this does not complete the project)'));
+  }
 
   if (!isSub && isOverdue(task, ctx.today)) {
     chips.push(
@@ -77,7 +90,7 @@ function renderRow(task, ctx, { parent = null, subtasks = null, expanded = false
   const isSub = !!parent;
   const priority = effectivePriority(task, parent);
   const done = task.status === STATUS.DONE;
-  const cancelled = task.status === STATUS.CANCELLED;
+  const cancelled = task.status === STATUS.CANCELLED || task.status === STATUS.SKIPPED;
   const overdue = !isSub && isOverdue(task, ctx.today);
   const description = (task.description || '').split('\n').find((line) => line.trim());
 

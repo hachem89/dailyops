@@ -549,6 +549,14 @@ body.is-dragging * {
   margin-top: -2px;
 }
 
+.link {
+  color: var(--accent);
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
 .drawer-section h3 {
   font-size: 12.5px;
   font-weight: 600;
@@ -741,5 +749,296 @@ body.is-dragging * {
 
   .kv {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Projects */
+.view-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.project-list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+}
+
+.project-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 4px 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.project-row:hover {
+  background: var(--bg-hover);
+}
+
+.project-row:hover .grip {
+  opacity: 1;
+}
+
+.project-row.is-finished .project-name {
+  color: var(--text-muted);
+}
+
+.project-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.project-name {
+  font-weight: 550;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.project-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  flex: 0 0 150px;
+}
+
+.project-progress .progress {
+  flex: 1;
+}
+
+.project-progress-large {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 6px 0 16px;
+  font-size: 13px;
+}
+
+.project-progress-large .project-progress {
+  flex: 0 1 280px;
+}
+
+.back-link {
+  margin: -8px 0 10px -8px;
+}
+
+.inline-input {
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: var(--radius);
+  padding: 2px 6px;
+  min-width: 0;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.inline-input:hover {
+  background: var(--bg-hover);
+}
+
+.inline-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--bg);
+}
+
+.project-title {
+  width: 100%;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 14px -7px;
+}
+
+.project-props {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px 16px;
+  margin-bottom: 14px;
+  font-size: 13.5px;
+}
+
+.project-props .inline {
+  display: flex;
+  gap: 6px;
+}
+
+.project-props .inline .input {
+  min-width: 0;
+}
+
+.project-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.project-view .drawer-section {
+  margin-bottom: 24px;
+}
+
+.psub-row {
+  align-items: center;
+}
+
+.psub-row .check {
+  margin-top: 0;
+}
+
+.psub-title {
+  flex: 1;
+  font-size: 14.5px;
+  padding: 3px 6px;
+}
+
+.is-done .psub-title {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.psub-props {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.input-compact {
+  width: auto;
+  min-height: 26px;
+  height: 26px;
+  font-size: 12.5px;
+  padding: 1px 4px;
+}
+
+.linked-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13.5px;
+}
+
+.linked-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+}
+
+.linked-date {
+  min-width: 72px;
+}
+
+.linked-past summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 13px;
+  margin: 8px 0 4px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--text-faint);
+  flex: none;
+}
+
+.status-dot.status-done {
+  background: var(--ok);
+  border-color: var(--ok);
+}
+
+.status-dot.status-cancelled,
+.status-dot.status-skipped {
+  background: var(--text-faint);
+}
+
+.project-danger {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.checkbox-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.checkbox-row legend {
+  width: 100%;
+}
+
+.checkbox-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.checkbox-pill:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.checkbox-pill input {
+  accent-color: var(--accent);
+}
+
+.deadline-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  border-radius: var(--radius);
+}
+
+.deadline-row:hover {
+  background: var(--bg-hover);
+}
+
+.deadline-row .kind {
+  color: var(--text-faint);
+  flex: none;
+}
+
+.deadline-row .grow {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .project-row {
+    flex-wrap: wrap;
+  }
+
+  .project-progress {
+    flex-basis: 100%;
+    padding-left: 26px;
+  }
+
+  .psub-row {
+    flex-wrap: wrap;
+  }
+
+  .psub-props {
+    width: 100%;
+    padding-left: 46px;
+    flex-wrap: wrap;
+  }
+
+  .project-title {
+    font-size: 24px;
   }
 }

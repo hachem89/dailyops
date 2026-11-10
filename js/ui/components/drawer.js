@@ -9,7 +9,12 @@ import { categoryMap, listCategories } from '../../domain/categories.js';
 import { getSetting } from '../../domain/settings.js';
 import { STATUS, isOverdue, subtasksOf, visibleGroupsForDate } from '../../domain/taskQueries.js';
 import { getTask, moveTaskToGroupEnd, rescheduleTask, updateTask } from '../../domain/tasks.js';
-import { registerActions } from '../actions.js';
+import { FREQ, WEEKDAYS_SHORT, describeRule, normalizePattern, repeatPresets, samePattern } from '../../domain/recurrence.js';
+import { getRule, setRepeat } from '../../domain/repeat.js';
+import { registerActions, ui } from '../actions.js';
+import { formDialog } from './dialog.js';
+import { stopRepeatingWithNotice } from './taskActions.js';
+import { toast } from './toast.js';
 import { enableSortable } from '../dnd.js';
 import { icon } from '../icons.js';
 import { renderSubtaskList } from './taskRow.js';
@@ -83,6 +88,79 @@ function clearButton(field, label) {
   );
 }
 
+function repeatField(task) {
+  const rule = getRule(task.recurrenceRuleId);
+  const presets = repeatPresets(rule?.startDate || task.scheduledDate);
+  const matched = rule ? presets.find((p) => samePattern(rule, normalizePattern(p.pattern, rule.startDate))) : null;
+  const select = h(
+    'select',
+    { class: 'select', id: 'f-repeat', dataset: { action: 'set-repeat', id: task.id, focusKey: 'd:repeat' } },
+    option('none', 'Does not repeat', !rule),
+    presets.map((p) => option(p.id, p.label, matched?.id === p.id)),
+    rule && !matched ? option('current', describeRule({ ...rule, untilProjectDone: false }), true) : null,
+    option('custom', 'Custom…', false),
+  );
+  const fields = [h('label', { for: 'f-repeat' }, icon('repeat'), 'Repeat'), select];
+  if (rule) {
+    fields.push(
+      h(
+        'span',
+        { class: 'hint faint' },
+        rule.untilProjectDone ? 'Until the project is completed. ' : '',
+        'Changes to title, priority, category, time, estimate and description also apply to later occurrences.',
+      ),
+    );
+  }
+  return fields;
+}
+
+async function customRepeat(task) {
+  const rule = getRule(task.recurrenceRuleId);
+  const base = rule || normalizePattern({ frequency: FREQ.WEEKLY }, task.scheduledDate);
+  const values = await formDialog({
+    title: 'Custom repeat',
+    submitLabel: 'Save',
+    fields: [
+      { name: 'interval', type: 'number', label: 'Every', value: base.interval || 1, min: 1, max: 365 },
+      {
+        name: 'frequency',
+        type: 'select',
+        label: 'Unit',
+        value: base.frequency,
+        options: [
+          { value: FREQ.DAILY, label: 'Day(s)' },
+          { value: FREQ.WEEKLY, label: 'Week(s)' },
+          { value: FREQ.MONTHLY, label: 'Month(s)' },
+        ],
+      },
+      {
+        name: 'weekdays',
+        type: 'checkboxes',
+        label: 'On (weekly only)',
+        value: (base.weekdays || []).map(String),
+        options: [1, 2, 3, 4, 5, 6, 0].map((d) => ({ value: String(d), label: WEEKDAYS_SHORT[d] })),
+      },
+      {
+        name: 'monthDay',
+        type: 'number',
+        label: 'Day of month (monthly only)',
+        value: base.monthDay || Number(task.scheduledDate.slice(8, 10)),
+        min: 1,
+        max: 31,
+        hint: 'Days past the end of a month fall on its last day.',
+      },
+    ],
+  });
+  if (!values) return false;
+  await setRepeat(task.id, {
+    frequency: values.frequency,
+    interval: Number(values.interval),
+    weekdays: values.weekdays.map(Number),
+    monthDay: Number(values.monthDay),
+  });
+  return true;
+}
+
 function render() {
   const task = getTask(currentId);
   const el = root();
@@ -95,7 +173,7 @@ function render() {
   const tasks = store.all('tasks');
   const subtasks = isSub ? [] : subtasksOf(tasks, task.id);
   const done = task.status === STATUS.DONE;
-  const cancelled = task.status === STATUS.CANCELLED;
+  const cancelled = task.status === STATUS.CANCELLED || task.status === STATUS.SKIPPED;
 
   const priorityField = h(
     'select',
@@ -138,6 +216,26 @@ function render() {
     );
     if (isOverdue(task, today)) {
       props.push(h('span', { class: 'hint chip-overdue' }, `Overdue since ${formatFriendlyDate(task.scheduledDate, today)}`));
+    }
+    props.push(...repeatField(task));
+    const project = task.projectId ? store.get('projects', task.projectId) : null;
+    if (project) {
+      props.push(
+        h('label', null, icon('projects'), 'Project'),
+        h(
+          'div',
+          { class: 'inline' },
+          h('a', { class: 'link', href: `#/projects/${project.id}`, dataset: { action: 'close-drawer' } }, project.name),
+          h('span', { class: 'faint', style: { fontSize: '12.5px' } }, task.projectSubtaskId ? '· project subtask' : '· project work'),
+        ),
+        h(
+          'span',
+          { class: 'hint faint' },
+          task.projectSubtaskId
+            ? 'Completing this task completes the project subtask.'
+            : 'Completing this task does not complete the project.',
+        ),
+      );
     }
   }
 
@@ -244,7 +342,7 @@ function render() {
         'div',
         { class: 'drawer-status' },
         cancelled
-          ? h('button', { type: 'button', class: 'btn btn-sm', dataset: { action: 'restore-task', id: task.id } }, icon('undo'), 'Restore')
+          ? h('button', { type: 'button', class: 'btn btn-sm', dataset: { action: 'restore-task', id: task.id } }, icon('undo'), task.status === STATUS.SKIPPED ? 'Undo skip' : 'Restore')
           : h(
               'button',
               { type: 'button', class: done ? 'btn btn-sm' : 'btn btn-sm btn-primary', dataset: { action: 'toggle-task', id: task.id, focusKey: 'd:toggle' } },
@@ -254,10 +352,16 @@ function render() {
         !isSub && isOverdue(task, today)
           ? h('button', { type: 'button', class: 'btn btn-sm', dataset: { action: 'move-today', id: task.id } }, icon('arrowRight'), 'Move to today')
           : null,
-        !cancelled
-          ? h('button', { type: 'button', class: 'btn btn-sm btn-ghost', dataset: { action: 'cancel-task', id: task.id } }, icon('ban'), 'Cancel task')
-          : null,
-        h('button', { type: 'button', class: 'btn btn-sm btn-ghost btn-danger', dataset: { action: 'delete-task', id: task.id } }, icon('trash'), 'Delete'),
+        task.recurrenceRuleId
+          ? task.status === STATUS.OPEN
+            ? h('button', { type: 'button', class: 'btn btn-sm btn-ghost', dataset: { action: 'skip-task', id: task.id } }, icon('skip'), 'Skip this time')
+            : null
+          : !cancelled
+            ? h('button', { type: 'button', class: 'btn btn-sm btn-ghost', dataset: { action: 'cancel-task', id: task.id } }, icon('ban'), 'Cancel task')
+            : null,
+        task.recurrenceRuleId
+          ? null
+          : h('button', { type: 'button', class: 'btn btn-sm btn-ghost btn-danger', dataset: { action: 'delete-task', id: task.id } }, icon('trash'), 'Delete'),
       ),
       h('div', { class: 'props' }, props),
       h(
@@ -361,7 +465,7 @@ async function saveField(input) {
       await updateTask(task.id, { categoryId: raw || null });
       return;
     case 'groupId':
-      await moveTaskToGroupEnd(task.id, raw || null);
+      await moveTaskToGroupEnd(task.id, raw || null, { updateSeries: true });
       return;
     case 'scheduledDate':
       if (isDateKey(raw)) await rescheduleTask(task.id, raw);
@@ -385,6 +489,24 @@ async function saveField(input) {
 }
 
 registerActions({
+  'set-repeat': async (el) => {
+    const task = getTask(el.dataset.id);
+    if (!task) return;
+    const value = el.value;
+    el.blur();
+    if (value === 'none') {
+      if (task.recurrenceRuleId) await stopRepeatingWithNotice(task.id);
+    } else if (value === 'custom') {
+      if (!(await customRepeat(task))) ui.render();
+    } else if (value !== 'current') {
+      const base = getRule(task.recurrenceRuleId)?.startDate || task.scheduledDate;
+      const preset = repeatPresets(base).find((p) => p.id === value);
+      if (preset) {
+        await setRepeat(task.id, preset.pattern);
+        toast(`Repeats: ${preset.label}`);
+      }
+    }
+  },
   'close-drawer': () => closeDrawer(),
   'clear-field': (el) => {
     const patch = el.dataset.field === 'deadline' ? { deadline: null, deadlineTime: null } : { [el.dataset.field]: null };
