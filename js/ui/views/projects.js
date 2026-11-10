@@ -434,21 +434,28 @@ export function renderProject(root, { id }) {
 
 // ------------------------------------------------------------------ actions
 
+// Asks for a name and creates a project. Used by the Projects page, the slash
+// menu and the Shift+N shortcut.
+export async function promptNewProject(initialName = '', { open = true } = {}) {
+  const values = await formDialog({
+    title: 'New project',
+    submitLabel: 'Create project',
+    fields: [{ name: 'name', label: 'Name', value: initialName, placeholder: 'e.g. Quran memorization extension', required: true }],
+  });
+  if (!values) return null;
+  const project = await createProject(values.name);
+  if (!project) return null;
+  if (open) navigate(`#/projects/${project.id}`);
+  else toast(`Project “${project.name}” created`, { actionLabel: 'Open', onAction: () => navigate(`#/projects/${project.id}`) });
+  return project;
+}
+
 registerActions({
   'project-filter': (el) => {
     listState.filter = el.dataset.value;
     ui.render();
   },
-  'new-project': async () => {
-    const values = await formDialog({
-      title: 'New project',
-      submitLabel: 'Create project',
-      fields: [{ name: 'name', label: 'Name', placeholder: 'e.g. Quran memorization extension', required: true }],
-    });
-    if (!values) return;
-    const project = await createProject(values.name);
-    if (project) navigate(`#/projects/${project.id}`);
-  },
+  'new-project': () => promptNewProject(),
   'project-field': async (el) => {
     const { id, field } = el.dataset;
     const project = getProject(id);

@@ -10,6 +10,7 @@ import {
   restoreTasks,
   setStatus,
   toggleComplete,
+  updateTask,
 } from '../../domain/tasks.js';
 import { stopRepeating } from '../../domain/repeat.js';
 import { registerActions, ui } from '../actions.js';
@@ -23,7 +24,8 @@ export async function deleteWithUndo(id) {
   if (!task) return;
   const removed = await deleteTask(id);
   const extra = removed.length - 1;
-  toast(`Deleted “${task.title}”${extra ? ` and ${extra} subtask${extra === 1 ? '' : 's'}` : ''}`, {
+  const name = task.kind === 'divider' ? 'divider' : `“${task.title}”`;
+  toast(`Deleted ${name}${extra ? ` and ${extra} subtask${extra === 1 ? '' : 's'}` : ''}`, {
     actionLabel: 'Undo',
     onAction: () => restoreTasks(removed),
     duration: 7000,
@@ -86,6 +88,11 @@ registerActions({
   'restore-task': (el) => setStatus(el.dataset.id, STATUS.OPEN),
   'skip-task': (el) => setStatus(el.dataset.id, STATUS.SKIPPED),
   'delete-task': (el) => deleteWithUndo(el.dataset.id),
+  'block-title': async (el) => {
+    const title = el.value.trim();
+    if (title) await updateTask(el.dataset.id, { title });
+    else ui.render();
+  },
   'task-menu': (el) => {
     const task = getTask(el.dataset.id);
     if (task) openMenu(el, taskMenuItems(task));

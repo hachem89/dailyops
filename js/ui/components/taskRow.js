@@ -266,7 +266,50 @@ function inlineReminder(task) {
   return null;
 }
 
+// Heading and divider blocks created with the slash menu.
+function renderLayoutBlock(task, ctx) {
+  const grip = ctx.draggable
+    ? h(
+        'button',
+        { type: 'button', class: 'grip', 'data-drag-handle': true, 'aria-label': 'Drag to reorder', dataset: { focusKey: `grip:${task.id}` } },
+        icon('grip'),
+      )
+    : null;
+  const remove = h(
+    'button',
+    {
+      type: 'button',
+      class: 'icon-btn sm block-delete',
+      'aria-label': task.kind === 'heading' ? `Delete heading ${task.title}` : 'Delete divider',
+      title: 'Delete',
+      dataset: { action: 'delete-task', id: task.id },
+    },
+    icon('trash'),
+  );
+  return h(
+    'div',
+    { class: `task-block block block-${task.kind}`, dataset: { dragItem: ctx.draggable ? 'task' : null, id: task.id } },
+    h(
+      'div',
+      { class: 'task-row block-row' },
+      grip,
+      task.kind === 'heading'
+        ? h('input', {
+            type: 'text',
+            class: 'inline-input block-title',
+            value: task.title,
+            maxlength: 200,
+            'aria-label': 'Heading',
+            dataset: { action: 'block-title', id: task.id, focusKey: `block:${task.id}` },
+          })
+        : h('hr', { class: 'block-divider', 'aria-hidden': 'true' }),
+      remove,
+    ),
+  );
+}
+
 export function renderTaskBlock(task, ctx) {
+  if (task.kind === 'heading' || task.kind === 'divider') return renderLayoutBlock(task, ctx);
   if (task.parentTaskId) {
     // Subtasks listed on their own (e.g. Upcoming deadlines).
     const parent = ctx.parentOf?.(task);
