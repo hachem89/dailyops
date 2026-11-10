@@ -49,11 +49,13 @@ test('execution stats keep cancelled and skipped apart from completed', () => {
     task('f', { scheduledDate: '2026-11-09', recurrenceRuleId: 'r' }), // missed, not overdue
     task('sub', { parentTaskId: 'a', status: 'done' }),
     task('out', { scheduledDate: '2026-11-20', status: 'done' }),
+    task('later', { scheduledDate: '2026-11-12' }), // planned, not incomplete
+    task('futureHabit', { scheduledDate: '2026-11-12', recurrenceRuleId: 'r' }), // ignored
   ];
   const stats = executionStats(tasks, range, '2026-11-10');
   assert.deepEqual(
-    { done: stats.done, open: stats.open, cancelled: stats.cancelled, skipped: stats.skipped, overdue: stats.overdue, missed: stats.missed },
-    { done: 1, open: 3, cancelled: 1, skipped: 1, overdue: 1, missed: 1 },
+    { done: stats.done, open: stats.open, planned: stats.planned, cancelled: stats.cancelled, skipped: stats.skipped, overdue: stats.overdue, missed: stats.missed },
+    { done: 1, open: 3, planned: 1, cancelled: 1, skipped: 1, overdue: 1, missed: 1 },
   );
   assert.equal(stats.rate, 1 / 4);
   assert.equal(completionRate({ done: 0, open: 0 }), null);

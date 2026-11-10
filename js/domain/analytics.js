@@ -59,16 +59,26 @@ export function completionRate({ done, open }) {
   return done + open ? done / (done + open) : null;
 }
 
+// Open tasks on future days are "planned", not incomplete. Future recurring
+// occurrences are left out entirely: whether they exist yet depends only on
+// which days have been viewed (habits are measured under consistency).
 export function executionStats(tasks, range, today, { categoryId = null } = {}) {
-  const scoped = tasks.filter((t) => isTopLevel(t) && inRange(t.scheduledDate, range) && matchesCategory(t.categoryId, categoryId));
-  const counts = statusCounts(scoped);
+  const scoped = tasks.filter(
+    (t) =>
+      isTopLevel(t) &&
+      inRange(t.scheduledDate, range) &&
+      matchesCategory(t.categoryId, categoryId) &&
+      !(t.recurrenceRuleId && t.scheduledDate > today),
+  );
+  const planned = scoped.filter((t) => t.status === STATUS.OPEN && t.scheduledDate > today).length;
+  const counts = statusCounts(scoped.filter((t) => !(t.status === STATUS.OPEN && t.scheduledDate > today)));
   const overdue = scoped.filter((t) => t.status === STATUS.OPEN && !t.recurrenceRuleId && t.scheduledDate < today).length;
   const missed = scoped.filter((t) => t.status === STATUS.OPEN && t.recurrenceRuleId && t.scheduledDate < today).length;
   const perDay = range.days.map((date) => {
     const day = statusCounts(scoped.filter((t) => t.scheduledDate === date));
     return { date, ...day, total: day.done + day.open };
   });
-  return { ...counts, overdue, missed, rate: completionRate(counts), perDay };
+  return { ...counts, planned, overdue, missed, rate: completionRate(counts), perDay };
 }
 
 // ------------------------------------------------------- time allocation (B)
