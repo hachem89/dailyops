@@ -4,6 +4,9 @@ import { todayKey } from './utils/dates.js';
 import { captureFocus, isTypingTarget, restoreFocus } from './utils/dom.js';
 import { seedDefaultCategories } from './domain/categories.js';
 import { arrangeGroups } from './domain/groups.js';
+import { arrangeProjectSubtasks, arrangeProjects } from './domain/projects.js';
+import { ensureOccurrences } from './domain/repeat.js';
+import { addDays } from './utils/dates.js';
 import { getSetting } from './domain/settings.js';
 import { arrangeSubtasks, arrangeTasks, moveTaskToGroupEnd } from './domain/tasks.js';
 import { bindActions, ui } from './ui/actions.js';
@@ -17,6 +20,7 @@ import { renderSidebar } from './ui/sidebar.js';
 import { applyTheme, watchSystemTheme } from './ui/theme.js';
 import { renderArchive } from './ui/views/archive.js';
 import { renderPlaceholder } from './ui/views/placeholder.js';
+import { renderProject, renderProjects } from './ui/views/projects.js';
 import { loadStorageInfo, renderSettings } from './ui/views/settings.js';
 import { renderToday } from './ui/views/today.js';
 import { renderUpcoming } from './ui/views/upcoming.js';
@@ -25,7 +29,8 @@ const VIEWS = {
   today: { render: renderToday, title: 'Today' },
   day: { render: renderToday, title: 'Day' },
   upcoming: { render: renderUpcoming, title: 'Upcoming' },
-  projects: { render: renderPlaceholder, title: 'Projects' },
+  projects: { render: renderProjects, title: 'Projects' },
+  project: { render: renderProject, title: 'Project' },
   analytics: { render: renderPlaceholder, title: 'Analytics' },
   archive: { render: renderArchive, title: 'Archive' },
   settings: { render: renderSettings, title: 'Settings' },
@@ -40,12 +45,23 @@ let route = parseHash();
 let renderedRouteKey = null;
 let currentDay = todayKey();
 
-const routeKey = (r) => `${r.name}:${r.date ?? ''}`;
+const routeKey = (r) => `${r.name}:${r.date ?? r.id ?? ''}`;
+
+// Dates whose recurring occurrences should exist before the view renders.
+function occurrenceDates(r) {
+  const today = todayKey();
+  if (r.name === 'today') return [today];
+  if (r.name === 'day') return [r.date];
+  if (r.name === 'upcoming') return Array.from({ length: 8 }, (_, i) => addDays(today, i));
+  return [];
+}
 
 function render() {
   app.classList.toggle('sidebar-collapsed', !!getSetting('sidebarCollapsed'));
   applyTheme();
   renderSidebar(sidebarEl, route);
+
+  ensureOccurrences(occurrenceDates(route));
 
   const focus = captureFocus(viewRoot);
   const scrollTop = mainEl.scrollTop;
@@ -65,6 +81,8 @@ function handleDrop({ type, id, zoneId, orderedIds }) {
   if (type === 'task') return orderedIds ? arrangeTasks(zoneId, orderedIds) : moveTaskToGroupEnd(id, zoneId);
   if (type === 'subtask') return arrangeSubtasks(orderedIds);
   if (type === 'group') return arrangeGroups(orderedIds);
+  if (type === 'project') return arrangeProjects(orderedIds);
+  if (type === 'psub') return arrangeProjectSubtasks(orderedIds);
 }
 
 function onKeydown(event) {

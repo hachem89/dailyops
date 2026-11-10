@@ -7,6 +7,7 @@ import {
   subtasksOf,
   visibleGroupsForDate,
   byExecutionTime,
+  isMissed,
 } from '../js/domain/taskQueries.js';
 import { insertAt, reassignSlots, shiftId, sortByOrder } from '../js/domain/ordering.js';
 import { effectivePriority } from '../js/domain/priorities.js';
@@ -54,6 +55,7 @@ test('overdue tasks are open, top-level and scheduled before today', () => {
     task('done', { scheduledDate: '2026-11-08', status: 'done' }),
     task('cancelled', { scheduledDate: '2026-11-08', status: 'cancelled' }),
     task('sub', { scheduledDate: null, parentTaskId: 'old' }),
+    task('habit', { scheduledDate: '2026-11-08', recurrenceRuleId: 'r1', occurrenceDate: '2026-11-08' }),
     task('today'),
   ];
   assert.deepEqual(overdueTasks(tasks, '2026-11-10').map((t) => t.id), ['older', 'old']);
@@ -64,6 +66,7 @@ test('day progress ignores cancelled tasks and subtasks', () => {
     task('a', { status: 'done' }),
     task('b'),
     task('c', { status: 'cancelled' }),
+    task('k', { status: 'skipped', recurrenceRuleId: 'r1' }),
     task('s', { parentTaskId: 'a', scheduledDate: null, status: 'done' }),
   ];
   assert.deepEqual(dayProgress(tasks, '2026-11-10'), { done: 1, total: 2 });
@@ -118,4 +121,11 @@ test('subtasks inherit priority unless overridden', () => {
   assert.equal(effectivePriority({ priority: null }, parent), 1);
   assert.equal(effectivePriority({ priority: 4 }, parent), 4);
   assert.equal(effectivePriority({ priority: null }, null), 3);
+});
+
+test('past open occurrences are missed, not overdue', () => {
+  const occurrence = task('habit', { scheduledDate: '2026-11-08', recurrenceRuleId: 'r1', occurrenceDate: '2026-11-08' });
+  assert.equal(isMissed(occurrence, '2026-11-10'), true);
+  assert.equal(isMissed({ ...occurrence, status: 'done' }, '2026-11-10'), false);
+  assert.equal(isMissed(task('plain', { scheduledDate: '2026-11-08' }), '2026-11-10'), false);
 });

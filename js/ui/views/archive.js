@@ -49,7 +49,7 @@ export function renderArchive(root) {
         'header',
         { class: 'view-header' },
         h('h1', { class: 'view-title' }, 'Archive'),
-        h('p', { class: 'view-subtitle' }, 'Completed and cancelled tasks across all days. They also stay visible on their original day.'),
+        h('p', { class: 'view-subtitle' }, 'Completed, cancelled and skipped tasks across all days. They also stay visible on their original day.'),
       ),
       h(
         'div',
@@ -61,6 +61,7 @@ export function renderArchive(root) {
             ['all', 'All'],
             [STATUS.DONE, 'Completed'],
             [STATUS.CANCELLED, 'Cancelled'],
+            [STATUS.SKIPPED, 'Skipped'],
           ].map(([value, label]) =>
             h('button', { type: 'button', 'aria-pressed': String(state.status === value), dataset: { action: 'archive-status', value } }, label),
           ),

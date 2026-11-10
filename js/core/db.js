@@ -2,9 +2,9 @@
 // existing users are upgraded step by step when DB_VERSION increases.
 
 const DB_NAME = 'dailyops';
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 
-export const STORES = ['tasks', 'groups', 'categories', 'settings'];
+export const STORES = ['tasks', 'groups', 'categories', 'settings', 'projects', 'projectSubtasks', 'recurrenceRules'];
 
 const MIGRATIONS = {
   1(db) {
@@ -18,6 +18,20 @@ const MIGRATIONS = {
 
     db.createObjectStore('categories', { keyPath: 'id' });
     db.createObjectStore('settings', { keyPath: 'key' });
+  },
+
+  // Projects, project subtasks and recurrence rules. Existing tasks need no
+  // rewrite: the new optional fields (projectId, recurrenceRuleId,
+  // occurrenceDate) are read as null when absent.
+  2(db, tx) {
+    db.createObjectStore('projects', { keyPath: 'id' });
+    const subtasks = db.createObjectStore('projectSubtasks', { keyPath: 'id' });
+    subtasks.createIndex('projectId', 'projectId');
+    db.createObjectStore('recurrenceRules', { keyPath: 'id' });
+
+    const tasks = tx.objectStore('tasks');
+    tasks.createIndex('projectId', 'projectId');
+    tasks.createIndex('recurrenceRuleId', 'recurrenceRuleId');
   },
 };
 

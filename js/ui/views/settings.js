@@ -9,7 +9,7 @@ import { confirmDialog } from '../components/dialog.js';
 import { toast } from '../components/toast.js';
 import { icon } from '../icons.js';
 
-export const APP_VERSION = '0.1.0';
+export const APP_VERSION = '0.2.0';
 
 const storageInfo = { persisted: null, usage: null };
 

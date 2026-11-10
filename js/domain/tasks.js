@@ -1,12 +1,16 @@
 // Task commands. Every change produces a new record object; cached records are
 // never mutated in place.
 import * as store from '../core/store.js';
-import { createId, nowIso } from '../utils/ids.js';
+import { nowIso } from '../utils/ids.js';
 import { isDateKey } from '../utils/dates.js';
 import { nextOrder } from './ordering.js';
 import { isPriority } from './priorities.js';
 import { getSetting } from './settings.js';
+import { SUBTASK_STATUS } from './projectQueries.js';
+import { renameProjectSubtask, setProjectSubtaskStatus } from './projectLinks.js';
+import { applyTemplateChange, setRuleGroup } from './repeat.js';
 import { STATUS, containerTasks, isGroupVisibleOn, subtasksOf } from './taskQueries.js';
+import { taskRecord } from './taskRecord.js';
 
 const allTasks = () => store.all('tasks');
 const allGroups = () => store.all('groups');
@@ -15,7 +19,15 @@ export function getTask(id) {
   return store.get('tasks', id);
 }
 
-export function createTask({ title, scheduledDate, groupId = null, parentTaskId = null, priority }) {
+export function createTask({
+  title,
+  scheduledDate,
+  groupId = null,
+  parentTaskId = null,
+  priority,
+  projectId = null,
+  projectSubtaskId = null,
+}) {
   const trimmed = (title || '').trim();
   if (!trimmed) return Promise.resolve(null);
 
@@ -26,45 +38,40 @@ export function createTask({ title, scheduledDate, groupId = null, parentTaskId 
     ? subtasksOf(allTasks(), parentTaskId)
     : containerTasks(allTasks(), allGroups(), scheduledDate, groupId);
 
-  const createdAt = nowIso();
-  const task = {
-    id: createId(),
+  const task = taskRecord({
     title: trimmed,
-    description: '',
-    notes: '',
     // Subtasks follow their parent's date, group and (by default) priority.
     scheduledDate: parent ? null : scheduledDate,
-    deadline: null,
-    deadlineTime: null,
-    executionTime: null,
     priority: parent ? null : isPriority(priority) ? priority : getSetting('defaultPriority'),
-    categoryId: null,
     groupId: parent ? null : groupId,
     parentTaskId: parent ? parent.id : null,
-    projectId: null,
-    projectSubtaskId: null,
-    recurrenceRuleId: null,
-    status: STATUS.OPEN,
+    projectId: parent ? null : projectId,
+    projectSubtaskId: parent ? null : projectSubtaskId,
     manualOrder: nextOrder(siblings),
-    estimatedDuration: null,
-    rescheduleHistory: [],
-    createdAt,
-    updatedAt: createdAt,
-    completedAt: null,
-    cancelledAt: null,
-  };
+  });
   return store.put('tasks', task).then(() => task);
 }
 
-export function updateTask(id, patch) {
+export async function updateTask(id, patch) {
   const task = getTask(id);
-  if (!task) return Promise.resolve();
-  return store.put('tasks', { ...task, ...patch, updatedAt: nowIso() });
+  if (!task) return;
+  await store.put('tasks', { ...task, ...patch, updatedAt: nowIso() });
+  if (task.recurrenceRuleId) await applyTemplateChange(task, patch);
+  if (task.projectSubtaskId && patch.title && patch.title !== task.title) {
+    await renameProjectSubtask(task.projectSubtaskId, patch.title);
+  }
 }
 
 export function setStatus(id, status) {
   const task = getTask(id);
   if (!task || task.status === status) return Promise.resolve();
+  // A daily task that stands for a project subtask completes the subtask itself.
+  if (task.projectSubtaskId && store.get('projectSubtasks', task.projectSubtaskId)) {
+    if (status === STATUS.DONE) return setProjectSubtaskStatus(task.projectSubtaskId, SUBTASK_STATUS.DONE);
+    if (status === STATUS.OPEN && task.status === STATUS.DONE) {
+      return setProjectSubtaskStatus(task.projectSubtaskId, SUBTASK_STATUS.OPEN);
+    }
+  }
   const now = nowIso();
   return store.put('tasks', {
     ...task,
@@ -78,7 +85,7 @@ export function setStatus(id, status) {
 // Completing a parent never completes its subtasks, and the task keeps its position.
 export function toggleComplete(id) {
   const task = getTask(id);
-  if (!task || task.status === STATUS.CANCELLED) return Promise.resolve();
+  if (!task || task.status === STATUS.CANCELLED || task.status === STATUS.SKIPPED) return Promise.resolve();
   return setStatus(id, task.status === STATUS.DONE ? STATUS.OPEN : STATUS.DONE);
 }
 
@@ -123,11 +130,13 @@ export function arrangeTasks(groupId, orderedIds) {
   return store.put('tasks', updates);
 }
 
-export function moveTaskToGroupEnd(id, groupId) {
+export async function moveTaskToGroupEnd(id, groupId, { updateSeries = false } = {}) {
   const task = getTask(id);
-  if (!task || task.parentTaskId) return Promise.resolve();
+  if (!task || task.parentTaskId) return;
   const target = containerTasks(allTasks(), allGroups(), task.scheduledDate, groupId).filter((t) => t.id !== id);
-  return updateTask(id, { groupId, manualOrder: nextOrder(target) });
+  await store.put('tasks', { ...task, groupId, manualOrder: nextOrder(target), updatedAt: nowIso() });
+  // Choosing a group in the details panel also sets where future occurrences go.
+  if (updateSeries && task.recurrenceRuleId) await setRuleGroup(task.recurrenceRuleId, groupId);
 }
 
 export function arrangeSubtasks(orderedIds) {
