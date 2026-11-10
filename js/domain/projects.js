@@ -11,6 +11,7 @@ import { endProjectSeries, setRepeat } from './repeat.js';
 import { getSetting } from './settings.js';
 import { STATUS } from './taskQueries.js';
 import { createTask } from './tasks.js';
+import { stopTimerIfTarget } from './timer.js';
 import { FREQ } from './recurrence.js';
 
 export const getProject = (id) => store.get('projects', id);
@@ -62,6 +63,7 @@ export async function setProjectStatus(id, status) {
 // kept as ordinary tasks (with their history); its repeating series end today.
 export async function deleteProject(id) {
   const now = nowIso();
+  await stopTimerIfTarget('project', [id]);
   await endProjectSeries(id, { includeAll: true });
   const rules = store
     .all('recurrenceRules')

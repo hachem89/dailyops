@@ -17,9 +17,11 @@ import './ui/components/taskActions.js';
 import { enableSortable, moveWithKeyboard } from './ui/dnd.js';
 import { parseHash } from './ui/router.js';
 import { renderSidebar } from './ui/sidebar.js';
+import { renderTimerBar, runningClock } from './ui/components/timerBar.js';
+import { setTitle, startLiveClock } from './ui/live.js';
 import { applyTheme, watchSystemTheme } from './ui/theme.js';
 import { renderArchive } from './ui/views/archive.js';
-import { renderPlaceholder } from './ui/views/placeholder.js';
+import { renderAnalytics } from './ui/views/analytics.js';
 import { renderProject, renderProjects } from './ui/views/projects.js';
 import { loadStorageInfo, renderSettings } from './ui/views/settings.js';
 import { renderToday } from './ui/views/today.js';
@@ -31,7 +33,7 @@ const VIEWS = {
   upcoming: { render: renderUpcoming, title: 'Upcoming' },
   projects: { render: renderProjects, title: 'Projects' },
   project: { render: renderProject, title: 'Project' },
-  analytics: { render: renderPlaceholder, title: 'Analytics' },
+  analytics: { render: renderAnalytics, title: 'Analytics' },
   archive: { render: renderArchive, title: 'Archive' },
   settings: { render: renderSettings, title: 'Settings' },
 };
@@ -60,6 +62,7 @@ function render() {
   app.classList.toggle('sidebar-collapsed', !!getSetting('sidebarCollapsed'));
   applyTheme();
   renderSidebar(sidebarEl, route);
+  renderTimerBar(document.getElementById('timer-bar'));
 
   ensureOccurrences(occurrenceDates(route));
 
@@ -72,7 +75,8 @@ function render() {
   const key = routeKey(route);
   mainEl.scrollTop = key === renderedRouteKey ? scrollTop : 0;
   renderedRouteKey = key;
-  document.title = `${view.title} · DailyOps`;
+  const clock = runningClock();
+  setTitle(`${view.title} · DailyOps`, clock?.since ?? null, clock?.base ?? 0);
 
   refreshDrawer();
 }
@@ -159,6 +163,7 @@ async function start() {
   }, 30000);
 
   render();
+  startLiveClock();
   loadStorageInfo().then(() => route.name === 'settings' && render());
 }
 

@@ -1,6 +1,8 @@
 // Task and subtask rows, shared by every view and the details drawer.
 import { h, cls } from '../../utils/dom.js';
-import { formatDuration, formatFriendlyDate } from '../../utils/dates.js';
+import { formatDuration, formatFriendlyDate, formatMs } from '../../utils/dates.js';
+import { trackingIndex } from '../../domain/timer.js';
+import { liveElapsed } from '../live.js';
 import { deadlineLabel, deadlineStatus } from '../../domain/deadlines.js';
 import { effectivePriority, priorityInfo } from '../../domain/priorities.js';
 import { isCollapsed } from '../../domain/settings.js';
@@ -34,6 +36,22 @@ function deadlineChip(task, now) {
     deadlineLabel(task.deadline, task.deadlineTime, now).replace(/^Overdue/, finished ? 'Was due' : 'Overdue'),
     'Deadline',
   );
+}
+
+// Tracked time against the estimate: "25m / 45m", live while the timer runs.
+function timeChip(task) {
+  const { finished, open } = trackingIndex();
+  const done = finished.get(task.id) || 0;
+  const estimate = task.estimatedDuration;
+  const estimateText = estimate ? ` / ${formatDuration(estimate)}` : '';
+  if (open?.taskId === task.id) {
+    return h('span', { class: 'chip chip-running', title: 'Timer running' }, icon('timer'), liveElapsed(open.start, done, 'short'), estimateText);
+  }
+  if (done) {
+    const over = estimate && done > estimate * 60000;
+    return chip(over ? 'chip-deadline-approaching' : '', 'timer', `${formatMs(done)}${estimateText}`, over ? 'Tracked time is over the estimate' : 'Tracked time / estimate');
+  }
+  return estimate ? chip('', 'timer', `~${formatDuration(estimate)}`, 'Estimated duration') : null;
 }
 
 function metaChips(task, ctx, { parent, subtasks }) {
@@ -71,7 +89,7 @@ function metaChips(task, ctx, { parent, subtasks }) {
 
   if (ctx.showTimes && task.executionTime) chips.push(chip('', 'clock', task.executionTime, 'Execution time'));
   chips.push(deadlineChip(task, ctx.now));
-  if (task.estimatedDuration) chips.push(chip('', 'timer', formatDuration(task.estimatedDuration), 'Estimated duration'));
+  chips.push(timeChip(task));
   if (!isSub) chips.push(categoryChip(ctx.categories.get(task.categoryId)));
 
   if (subtasks?.length) {
@@ -84,6 +102,22 @@ function metaChips(task, ctx, { parent, subtasks }) {
     }
   }
   return chips.filter(Boolean);
+}
+
+function timerButton(task, ctx) {
+  const running = trackingIndex().open?.taskId === task.id;
+  if (!running && task.status !== STATUS.OPEN) return null;
+  return h(
+    'button',
+    {
+      type: 'button',
+      class: running ? 'icon-btn sm timer-btn is-running' : 'icon-btn sm timer-btn',
+      'aria-label': running ? `Pause timer for ${task.title}` : `Start timer for ${task.title}`,
+      title: running ? 'Pause timer' : 'Start timer',
+      dataset: { action: 'timer-toggle', type: 'task', id: task.id, focusKey: `${ctx.keyPrefix || ''}timer:${task.id}` },
+    },
+    icon(running ? 'pause' : 'play'),
+  );
 }
 
 function renderRow(task, ctx, { parent = null, subtasks = null, expanded = false, draggable }) {
@@ -163,6 +197,7 @@ function renderRow(task, ctx, { parent = null, subtasks = null, expanded = false
             'Move to today',
           )
         : null,
+      timerButton(task, ctx),
       h(
         'button',
         {

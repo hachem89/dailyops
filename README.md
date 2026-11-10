@@ -55,6 +55,30 @@ browser's IndexedDB on the device you are using.
 - **Upcoming deadlines** list tasks, subtasks, project subtasks and projects,
   filterable by type, priority and status
 
+### Time tracking (Phase 3)
+
+- One global timer for a task, subtask or project: start, pause, resume, stop,
+  from the task row, the task details, the project page or the timer bar
+- Starting a timer elsewhere pauses the current one and keeps its time
+- Each work interval is stored as a session with start and end timestamps, so the
+  timer survives refreshes, closed tabs and browser restarts; elapsed time is
+  always computed from the stored start time
+- Estimated vs tracked time on every task; correct any session's minutes, delete
+  sessions, or add time worked without the timer
+- Time history stays with the task when it is rescheduled
+
+### Analytics (Phase 3)
+
+Weekly or monthly, optionally filtered by category, computed locally:
+
+- **Daily execution**: completed, incomplete (with overdue and missed), completion
+  rate, skipped occurrences and cancelled tasks — cancelled is never counted as done;
+  future tasks count as planned, not incomplete
+- **Time allocation**: tracked time by category and by project, estimated vs actual
+- **Consistency**: each recurring task's history, completion rate and streak
+  (skipped days do not break a streak)
+- **Task insights**: overdue work and tasks that were postponed or moved repeatedly
+
 ## Your data
 
 - Everything is stored locally in IndexedDB. Nothing about your tasks is sent anywhere.
@@ -102,7 +126,7 @@ scripts/serve.mjs     Zero-dependency local dev server
 
 1. ~~Functional foundation~~ — done
 2. ~~Projects and recurrence~~ — done
-3. Time tracking and analytics
+3. ~~Time tracking and analytics~~ — done
 4. Islamic reminders
 5. Slash commands, global search and keyboard shortcuts
 6. Backup/restore, migrations, deployment to GitHub Pages

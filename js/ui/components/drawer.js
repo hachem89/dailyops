@@ -18,6 +18,7 @@ import { toast } from './toast.js';
 import { enableSortable } from '../dnd.js';
 import { icon } from '../icons.js';
 import { renderSubtaskList } from './taskRow.js';
+import { renderTimeSection } from './timeSection.js';
 
 let currentId = null;
 let deferred = false;
@@ -364,6 +365,7 @@ function render() {
           : h('button', { type: 'button', class: 'btn btn-sm btn-ghost btn-danger', dataset: { action: 'delete-task', id: task.id } }, icon('trash'), 'Delete'),
       ),
       h('div', { class: 'props' }, props),
+      renderTimeSection({ type: 'task', id: task.id, estimateMinutes: task.estimatedDuration }, { keyPrefix: 'd:' }),
       h(
         'div',
         { class: 'drawer-section' },

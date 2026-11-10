@@ -8,9 +8,11 @@ const keyOf = (storeName, record) => (storeName === 'settings' ? record.key : re
 
 const listeners = new Set();
 let notifyScheduled = false;
+let version = 0;
 let errorHandler = (error) => console.error(error);
 
 function notify() {
+  version++;
   if (notifyScheduled) return;
   notifyScheduled = true;
   queueMicrotask(() => {
@@ -67,6 +69,11 @@ export async function clearAll() {
   await db.clearStores();
   Object.values(cache).forEach((map) => map.clear());
   notify();
+}
+
+// Increases on every change; lets callers cache derived data between writes.
+export function currentVersion() {
+  return version;
 }
 
 export function subscribe(listener) {

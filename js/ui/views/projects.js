@@ -35,6 +35,9 @@ import { confirmDialog, formDialog } from '../components/dialog.js';
 import { toast } from '../components/toast.js';
 import { icon } from '../icons.js';
 import { navigate } from '../router.js';
+import { renderTimeSection } from '../components/timeSection.js';
+import { trackingIndex } from '../../domain/timer.js';
+import { sessionMs } from '../../domain/analytics.js';
 
 const listState = { filter: 'open' };
 
@@ -145,6 +148,17 @@ export function renderProjects(root) {
 }
 
 // -------------------------------------------------------------- detail view
+
+// Time tracked on the project's daily tasks (and their subtasks).
+function linkedTaskMs(linkedTasks) {
+  const { finished, open } = trackingIndex();
+  const ids = new Set(linkedTasks.map((t) => t.id));
+  store.all('tasks').forEach((t) => ids.has(t.parentTaskId) && ids.add(t.id));
+  let total = 0;
+  ids.forEach((id) => (total += finished.get(id) || 0));
+  if (open && ids.has(open.taskId)) total += sessionMs(open);
+  return total;
+}
 
 function subtaskRow(subtask, project, now) {
   const done = subtask.status === SUBTASK_STATUS.DONE;
@@ -350,6 +364,12 @@ export function renderProject(root, { id }) {
         ),
         h('span', { class: 'faint', style: { fontSize: '12.5px' } }, 'Completing the daily task does not complete the project.'),
       ),
+      renderTimeSection({
+        type: 'project',
+        id: project.id,
+        extraMs: linkedTaskMs(linked),
+        extraLabel: 'Plus time on linked daily tasks',
+      }),
       h(
         'section',
         { class: 'drawer-section' },
