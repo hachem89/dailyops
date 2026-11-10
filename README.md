@@ -8,7 +8,7 @@ DailyOps is a priority-driven daily task list that runs entirely in your browser
 There are no accounts, no servers and no cloud database: your tasks live in your
 browser's IndexedDB on the device you are using.
 
-## Features (Phase 1)
+## Features
 
 - **Today view** with date navigation (previous/next day, Today, Tomorrow, date picker)
 - **Tasks**: create, edit, delete (with undo), complete/uncomplete, cancel/restore
@@ -28,6 +28,32 @@ browser's IndexedDB on the device you are using.
 - **Archive**: completed and cancelled tasks, searchable
 - **Light/dark theme** (or follow the system), remembered between sessions
 - Responsive layout with a mobile notice that data is stored per device
+
+### Projects (Phase 2)
+
+- Projects with name, description, priority, optional deadline, status
+  (active, on hold, completed, cancelled), creation date and manual order
+- Ordered project subtasks with their own deadlines and priority overrides;
+  progress is computed only from the project's subtasks
+- **Add a whole project to today** as "Work on …", optionally repeating every day
+  until the project is completed. Completing that daily task never completes the project
+- **Add a single project subtask to today.** The daily task references the subtask:
+  completing either one completes both, and renaming stays in sync
+- Deleting a project keeps any daily tasks that referred to it
+
+### Recurring tasks (Phase 2)
+
+- Every day, every weekday, weekly on a given day, monthly on a given date, or a
+  custom pattern (every *n* days / weeks on selected weekdays / months)
+- Each date gets its own occurrence with its own completion status, created when
+  that date is first viewed. Occurrences are matched by rule and date, so
+  refreshing never creates duplicates
+- A past occurrence that was not done is shown as **missed**, never as overdue,
+  and has no effect on later occurrences. Occurrences can be **skipped**
+- Editing an occurrence's title, priority, category, time, estimate or description
+  also updates later open occurrences ("this and following")
+- **Upcoming deadlines** list tasks, subtasks, project subtasks and projects,
+  filterable by type, priority and status
 
 ## Your data
 
@@ -75,7 +101,7 @@ scripts/serve.mjs     Zero-dependency local dev server
 ## Roadmap
 
 1. ~~Functional foundation~~ — done
-2. Projects and recurrence
+2. ~~Projects and recurrence~~ — done
 3. Time tracking and analytics
 4. Islamic reminders
 5. Slash commands, global search and keyboard shortcuts
