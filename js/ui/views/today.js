@@ -16,13 +16,15 @@ import {
   visibleGroupsForDate,
 } from '../../domain/taskQueries.js';
 import { createTask, rescheduleMany } from '../../domain/tasks.js';
-import { registerActions } from '../actions.js';
+import { registerActions, ui } from '../actions.js';
 import { confirmDialog, formDialog } from '../components/dialog.js';
 import { openMenu } from '../components/menu.js';
 import { toast } from '../components/toast.js';
 import { renderTaskBlock } from '../components/taskRow.js';
 import { renderReminder } from '../components/reminderCard.js';
 import { dailyReminder } from '../../domain/reminders.js';
+import { inputMode, setInputMode } from '../components/slashMenu.js';
+import { promptNewProject } from './projects.js';
 import { icon } from '../icons.js';
 import { navigate } from '../router.js';
 
@@ -33,6 +35,9 @@ export function isMobileContext() {
   return window.matchMedia('(max-width: 768px), (pointer: coarse)').matches;
 }
 
+// Day links double as drop targets: dropping a task on one reschedules it.
+const dateDrop = (date) => ({ dropZone: 'task', zoneId: `date:${date}`, dropPosition: 'date', dropDate: date });
+
 function renderHeader(date, today, progress, sortMode) {
   const relative = relativeDayLabel(date, today);
   const percent = progress.total ? Math.round((progress.done / progress.total) * 100) : 0;
@@ -42,10 +47,10 @@ function renderHeader(date, today, progress, sortMode) {
     h(
       'div',
       { class: 'day-nav' },
-      h('a', { class: 'icon-btn', href: dayHref(addDays(date, -1)), 'aria-label': 'Previous day', title: 'Previous day' }, icon('chevronLeft')),
-      h('a', { class: 'icon-btn', href: dayHref(addDays(date, 1)), 'aria-label': 'Next day', title: 'Next day' }, icon('chevronRight')),
-      date !== today ? h('a', { class: 'btn btn-sm', href: '#/today' }, 'Today') : null,
-      date !== addDays(today, 1) ? h('a', { class: 'btn btn-sm btn-ghost', href: dayHref(addDays(today, 1)) }, 'Tomorrow') : null,
+      h('a', { class: 'icon-btn', href: dayHref(addDays(date, -1)), 'aria-label': 'Previous day', title: 'Previous day (drop a task here to move it)', dataset: dateDrop(addDays(date, -1)) }, icon('chevronLeft')),
+      h('a', { class: 'icon-btn', href: dayHref(addDays(date, 1)), 'aria-label': 'Next day', title: 'Next day (drop a task here to move it)', dataset: dateDrop(addDays(date, 1)) }, icon('chevronRight')),
+      date !== today ? h('a', { class: 'btn btn-sm', href: '#/today', dataset: dateDrop(today) }, 'Today') : null,
+      date !== addDays(today, 1) ? h('a', { class: 'btn btn-sm btn-ghost', href: dayHref(addDays(today, 1)), dataset: dateDrop(addDays(today, 1)) }, 'Tomorrow') : null,
       h('input', {
         type: 'date',
         class: 'input date-picker',
@@ -142,21 +147,57 @@ function renderTaskList(zoneId, tasks, ctx, emptyText) {
   );
 }
 
+function modeChip(focusKey) {
+  return inputMode(focusKey) === 'heading' ? h('span', { class: 'mode-chip', title: 'Press Esc to go back to tasks' }, 'Heading') : null;
+}
+
 function addRow(groupId, date, label) {
+  const focusKey = `add:${groupId ?? ''}`;
+  const heading = inputMode(focusKey) === 'heading';
   return h(
     'form',
     { class: 'add-row', dataset: { action: 'add-task', group: groupId ?? '', date } },
     icon('plus'),
+    modeChip(focusKey),
     h('input', {
       name: 'title',
       type: 'text',
-      placeholder: 'Add task',
+      placeholder: heading ? 'Heading text (Esc to cancel)' : 'Add task, or type / for commands',
       autocomplete: 'off',
       maxlength: 500,
       'aria-label': `Add task to ${label}`,
-      dataset: { focusKey: `add:${groupId ?? ''}` },
+      'aria-haspopup': 'listbox',
+      dataset: { focusKey, slash: '1' },
     }),
   );
+}
+
+// Slash menu commands chosen in a task input on the day view.
+export async function runSlashCommand(command, { input, form, rest }) {
+  const date = form?.dataset.date || todayKey();
+  const groupId = form?.dataset.group || null;
+  const key = input.dataset.focusKey;
+  input.value = '';
+  switch (command) {
+    case 'task':
+      input.value = rest;
+      break;
+    case 'heading':
+      if (rest) await createTask({ title: rest, kind: 'heading', scheduledDate: date, groupId });
+      else setInputMode(key, 'heading');
+      break;
+    case 'divider':
+      await createTask({ title: '', kind: 'divider', scheduledDate: date, groupId });
+      break;
+    case 'group':
+      await promptNewGroup(date, rest);
+      break;
+    case 'project':
+      await promptNewProject(rest, { open: false });
+      break;
+  }
+  ui.render();
+  requestAnimationFrame(() => document.querySelector(`[data-focus-key="${CSS.escape(key)}"]`)?.focus());
 }
 
 export function renderToday(root, { date }) {
@@ -226,16 +267,18 @@ export function renderToday(root, { date }) {
         'form',
         { class: 'quick-add', dataset: { action: 'add-task', group: '', date: viewDate } },
         icon('plus'),
+        modeChip('quick-add'),
         h('input', {
           name: 'title',
           type: 'text',
-          placeholder: `Add a task for ${dayLabel}…`,
+          placeholder: inputMode('quick-add') === 'heading' ? 'Heading text (Esc to cancel)' : `Add a task for ${dayLabel}…`,
           autocomplete: 'off',
           maxlength: 500,
           'aria-label': 'Add a task',
-          dataset: { focusKey: 'quick-add' },
+          'aria-haspopup': 'listbox',
+          dataset: { focusKey: 'quick-add', slash: '1' },
         }),
-        h('span', { class: 'hint' }, 'Enter ↵'),
+        h('span', { class: 'hint' }, 'Type / for commands'),
       ),
 
       nothingPlanned
@@ -316,13 +359,13 @@ export function renderToday(root, { date }) {
   );
 }
 
-async function promptNewGroup(date) {
+async function promptNewGroup(date, initialName = '') {
   const values = await formDialog({
     title: 'New group',
     description: 'Groups organize tasks on a day. They are not categories.',
     submitLabel: 'Create group',
     fields: [
-      { name: 'name', label: 'Name', placeholder: 'e.g. Study, Career, Friday presentation', required: true },
+      { name: 'name', label: 'Name', value: initialName, placeholder: 'e.g. Study, Career, Friday presentation', required: true },
       {
         name: 'type',
         type: 'radio',
@@ -345,7 +388,9 @@ registerActions({
     const title = input.value.trim();
     if (!title) return;
     input.value = '';
-    await createTask({ title, scheduledDate: form.dataset.date, groupId: form.dataset.group || null });
+    const kind = inputMode(input.dataset.focusKey) === 'heading' ? 'heading' : 'task';
+    setInputMode(input.dataset.focusKey, 'task');
+    await createTask({ title, kind, scheduledDate: form.dataset.date, groupId: form.dataset.group || null });
   },
   'pick-date': (input) => {
     if (isDateKey(input.value)) navigate(dayHref(input.value));

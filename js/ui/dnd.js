@@ -6,10 +6,11 @@
 //   drop list:       data-drop-zone="<type>" data-zone-id="…" [data-drop-scope="…"]
 //                    (items of that type are its direct children)
 //   header target:   data-drop-zone="<type>" data-zone-id="…" data-drop-position="start|end"
+//   date target:     data-drop-zone="task" data-drop-position="date" data-drop-date="YYYY-MM-DD"
 //
 // onDrop receives { type, id, zoneId, orderedIds } where orderedIds is the full
 // new order of the target list, or null to append to a list that is not rendered
-// (a collapsed group).
+// (a collapsed group); or { type, id, date } when dropped on a date target.
 import { shiftId, insertAt } from '../domain/ordering.js';
 
 const START_DISTANCE = 4;
@@ -39,7 +40,11 @@ function startTracking(downEvent, handle, item, { onDrop, scrollContainer }) {
   let scrollFrame = null;
   let offsetY = 0;
 
-  handle.setPointerCapture?.(downEvent.pointerId);
+  try {
+    handle.setPointerCapture?.(downEvent.pointerId);
+  } catch {
+    /* pointer already released; listeners on the handle still work for mouse */
+  }
 
   const begin = () => {
     dragging = true;
@@ -159,6 +164,7 @@ function startTracking(downEvent, handle, item, { onDrop, scrollContainer }) {
 
 function resolveDrop(target, item, type) {
   const id = item.dataset.id;
+  if (target.zone.dataset.dropDate) return { type, id, date: target.zone.dataset.dropDate };
   const zoneId = target.zone.dataset.zoneId || null;
   if (target.position) {
     // Header target: insert at the start of the rendered list, or append if collapsed.

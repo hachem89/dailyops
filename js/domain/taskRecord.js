@@ -7,6 +7,7 @@ export function taskRecord(fields) {
   const createdAt = nowIso();
   return {
     id: createId(),
+    kind: 'task', // 'task' | 'heading' | 'divider'
     title: '',
     description: '',
     notes: '',

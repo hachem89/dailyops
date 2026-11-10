@@ -7,6 +7,7 @@ import { registerActions } from './actions.js';
 import { icon } from './icons.js';
 import { resolveTheme } from './theme.js';
 import { navSection } from './router.js';
+import { openSearch } from './components/searchDialog.js';
 
 const NAV = [
   { id: 'today', label: 'Today', icon: 'today', href: '#/today' },
@@ -42,6 +43,17 @@ export function renderSidebar(root, route) {
       ),
     ),
     h(
+      'div',
+      { class: 'nav' },
+      h(
+        'button',
+        { type: 'button', class: 'nav-link search-link', dataset: { action: 'open-search' }, title: 'Search (Ctrl+K)' },
+        icon('search'),
+        h('span', { class: 'label' }, 'Search'),
+        h('kbd', { class: 'label' }, /Mac|iPhone|iPad/.test(navigator.platform || '') ? '⌘K' : 'Ctrl K'),
+      ),
+    ),
+    h(
       'nav',
       { class: 'nav', 'aria-label': 'Main' },
       NAV.map((item) =>
@@ -52,7 +64,10 @@ export function renderSidebar(root, route) {
             href: item.href,
             'aria-current': item.id === active ? 'page' : null,
             title: collapsed ? item.label : null,
-            dataset: { action: 'nav-link' },
+            dataset:
+              item.id === 'today'
+                ? { action: 'nav-link', dropZone: 'task', zoneId: 'date:today', dropPosition: 'date', dropDate: todayKey() }
+                : { action: 'nav-link' },
           },
           icon(item.icon),
           h('span', { class: 'label' }, item.label),
@@ -83,6 +98,10 @@ export function renderSidebar(root, route) {
 }
 
 registerActions({
+  'open-search': () => {
+    document.getElementById('app').classList.remove('sidebar-open');
+    openSearch();
+  },
   'toggle-sidebar': () => setSetting('sidebarCollapsed', !getSetting('sidebarCollapsed')),
   'toggle-theme': () => setSetting('theme', resolveTheme() === 'dark' ? 'light' : 'dark'),
   // Closes the off-canvas sidebar on mobile after navigating.

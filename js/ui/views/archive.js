@@ -5,7 +5,7 @@ import { h } from '../../utils/dom.js';
 import { formatFriendlyDate, formatWeekday, todayKey } from '../../utils/dates.js';
 import { categoryMap } from '../../domain/categories.js';
 import { getSetting } from '../../domain/settings.js';
-import { STATUS, isTopLevel, matchesQuery, subtasksOf } from '../../domain/taskQueries.js';
+import { STATUS, isTaskItem, isTopLevel, matchesQuery, subtasksOf } from '../../domain/taskQueries.js';
 import { registerActions, ui } from '../actions.js';
 import { renderTaskBlock } from '../components/taskRow.js';
 import { icon } from '../icons.js';
@@ -19,7 +19,7 @@ export function renderArchive(root) {
   const today = todayKey();
   const tasks = store.all('tasks');
   const matching = tasks
-    .filter(isTopLevel)
+    .filter((t) => isTopLevel(t) && isTaskItem(t))
     .filter((t) => (state.status === 'all' ? t.status !== STATUS.OPEN : t.status === state.status))
     .filter((t) => matchesQuery(t, state.query.trim()))
     .sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate) || finishedAt(b).localeCompare(finishedAt(a)));

@@ -12,7 +12,7 @@ import { todayKey } from '../utils/dates.js';
 import { ISLAMIC_CONTENT } from '../content/islamic.js';
 import { MOMENTS, poolKey, takeNext, themeForTask } from './reminderRotation.js';
 import { getSetting, setSetting } from './settings.js';
-import { STATUS } from './taskQueries.js';
+import { STATUS, isTaskItem } from './taskQueries.js';
 
 const byId = new Map(ISLAMIC_CONTENT.map((item) => [item.id, item]));
 
@@ -26,7 +26,7 @@ function contextOf(task) {
 // Gives `task` a reminder for `moment` unless it already has one.
 export async function assignReminder(taskId, moment) {
   const task = store.get('tasks', taskId);
-  if (!task || task.parentTaskId || reminderItem(task.reminders?.[moment]?.itemId)) return;
+  if (!task || task.parentTaskId || !isTaskItem(task) || reminderItem(task.reminders?.[moment]?.itemId)) return;
   const key = poolKey(moment, contextOf(task));
   const { item, state } = takeNext(getSetting('reminderRotation'), key, ISLAMIC_CONTENT);
   if (!item) return;

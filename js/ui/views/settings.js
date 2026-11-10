@@ -9,8 +9,9 @@ import { confirmDialog } from '../components/dialog.js';
 import { toast } from '../components/toast.js';
 import { icon } from '../icons.js';
 import { ISLAMIC_CONTENT } from '../../content/islamic.js';
+import { SHORTCUTS, shortcutKeys } from '../shortcuts.js';
 
-export const APP_VERSION = '0.4.0';
+export const APP_VERSION = '0.5.0';
 
 const storageInfo = { persisted: null, usage: null };
 
@@ -82,6 +83,17 @@ export function renderSettings(root) {
         ),
       ),
 
+      h(
+        'section',
+        { class: 'settings-section' },
+        h('h2', null, 'Keyboard shortcuts'),
+        h('p', null, 'Single-key shortcuts work whenever you are not typing in a field. Browsers reserve Ctrl + N and Ctrl + Shift + N for new windows, so N and Shift + N are the reliable versions.'),
+        h(
+          'dl',
+          { class: 'shortcut-list' },
+          SHORTCUTS.map((s) => [h('dt', null, shortcutKeys(s).map((k) => h('kbd', null, k))), h('dd', null, s.label)]),
+        ),
+      ),
       h(
         'section',
         { class: 'settings-section' },
