@@ -14,6 +14,7 @@ import {
   timerState,
 } from '../../domain/timer.js';
 import { registerActions } from '../actions.js';
+import { assignReminder } from '../../domain/reminders.js';
 import { icon } from '../icons.js';
 import { liveElapsed } from '../live.js';
 
@@ -73,6 +74,7 @@ registerActions({
     if (type === 'task') {
       const task = store.get('tasks', id);
       if (!task || task.status === STATUS.CANCELLED || task.status === STATUS.SKIPPED) return;
+      assignReminder(task.parentTaskId || id, 'before').catch(() => {});
     }
     return startTimer(type, id);
   },

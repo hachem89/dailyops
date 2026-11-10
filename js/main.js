@@ -6,6 +6,7 @@ import { seedDefaultCategories } from './domain/categories.js';
 import { arrangeGroups } from './domain/groups.js';
 import { arrangeProjectSubtasks, arrangeProjects } from './domain/projects.js';
 import { ensureOccurrences } from './domain/repeat.js';
+import { ensureAfterReminders, ensureDailyReminder } from './domain/reminders.js';
 import { addDays } from './utils/dates.js';
 import { getSetting } from './domain/settings.js';
 import { arrangeSubtasks, arrangeTasks, moveTaskToGroupEnd } from './domain/tasks.js';
@@ -65,6 +66,8 @@ function render() {
   renderTimerBar(document.getElementById('timer-bar'));
 
   ensureOccurrences(occurrenceDates(route));
+  ensureAfterReminders();
+  if (route.name === 'today') ensureDailyReminder();
 
   const focus = captureFocus(viewRoot);
   const scrollTop = mainEl.scrollTop;

@@ -21,6 +21,8 @@ import { confirmDialog, formDialog } from '../components/dialog.js';
 import { openMenu } from '../components/menu.js';
 import { toast } from '../components/toast.js';
 import { renderTaskBlock } from '../components/taskRow.js';
+import { renderReminder } from '../components/reminderCard.js';
+import { dailyReminder } from '../../domain/reminders.js';
 import { icon } from '../icons.js';
 import { navigate } from '../router.js';
 
@@ -82,6 +84,12 @@ function renderHeader(date, today, progress, sortMode) {
         )
       : null,
   );
+}
+
+function renderDailyReminder() {
+  const daily = dailyReminder();
+  if (!daily) return null;
+  return renderReminder(daily.item, { checked: !!daily.checked, target: { daily: true }, label: 'Today', compact: true });
 }
 
 function renderMobileNotice() {
@@ -173,6 +181,7 @@ export function renderToday(root, { date }) {
     categories: categoryMap(),
     showTimes: getSetting('showExecutionTimes'),
     draggable: manual,
+    showReminders: true,
     subtasksOf: (id) => {
       if (!subtaskCache.has(id)) subtaskCache.set(id, subtasksOf(tasks, id));
       return subtaskCache.get(id);
@@ -192,6 +201,7 @@ export function renderToday(root, { date }) {
       { class: cls('view', !manual && 'no-drag') },
       renderHeader(viewDate, today, dayProgress(tasks, viewDate), sortMode),
       renderMobileNotice(),
+      viewDate === today ? renderDailyReminder() : null,
 
       overdue.length
         ? h(

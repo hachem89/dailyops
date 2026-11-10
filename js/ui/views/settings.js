@@ -8,8 +8,9 @@ import { registerActions, ui } from '../actions.js';
 import { confirmDialog } from '../components/dialog.js';
 import { toast } from '../components/toast.js';
 import { icon } from '../icons.js';
+import { ISLAMIC_CONTENT } from '../../content/islamic.js';
 
-export const APP_VERSION = '0.3.0';
+export const APP_VERSION = '0.4.0';
 
 const storageInfo = { persisted: null, usage: null };
 
@@ -174,6 +175,12 @@ export function renderSettings(root) {
           h('dd', null, APP_VERSION),
           h('dt', null, 'Database schema'),
           h('dd', null, `v${DB_VERSION}`),
+          h('dt', null, 'Islamic reminders'),
+          h(
+            'dd',
+            null,
+            `${ISLAMIC_CONTENT.length} items in Arabic, bundled with the app. Quran text: Tanzil (Simple). Hadith texts and grades: the six books as published on sunnah.com. Every item is checked against its source by the test suite; Sunan items are included only when graded sahih or hasan by al-Albani.`,
+          ),
           h('dt', null, 'Philosophy'),
           h('dd', null, 'Know what matters. Start whenever you can. Work through it one task at a time.'),
         ),

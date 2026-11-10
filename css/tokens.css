@@ -1,7 +1,7 @@
 :root {
   --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --font-arabic: 'Amiri', 'Scheherazade New', 'Noto Naskh Arabic', 'Traditional Arabic', serif;
+  --font-arabic: 'Amiri', 'Scheherazade New', 'Noto Naskh Arabic', 'Sakkal Majalla', 'Traditional Arabic', 'Geeza Pro', 'Arabic Typesetting', serif;
 
   --radius-sm: 4px;
   --radius: 6px;

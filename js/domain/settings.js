@@ -9,6 +9,8 @@ const DEFAULTS = {
   mobileNoticeDismissed: false,
   collapsed: {}, // ui section id → true when collapsed
   seededDefaults: false,
+  reminderRotation: {}, // pool key → next index (Islamic reminders)
+  dailyReminder: null, // { date, itemId, checked }
 };
 
 export function getSetting(key) {

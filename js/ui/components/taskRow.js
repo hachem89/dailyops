@@ -3,6 +3,8 @@ import { h, cls } from '../../utils/dom.js';
 import { formatDuration, formatFriendlyDate, formatMs } from '../../utils/dates.js';
 import { trackingIndex } from '../../domain/timer.js';
 import { liveElapsed } from '../live.js';
+import { reminderItem } from '../../domain/reminders.js';
+import { renderReminder } from './reminderCard.js';
 import { deadlineLabel, deadlineStatus } from '../../domain/deadlines.js';
 import { effectivePriority, priorityInfo } from '../../domain/priorities.js';
 import { isCollapsed } from '../../domain/settings.js';
@@ -247,6 +249,23 @@ export function renderSubtaskList(parent, subtasks, ctx) {
 
 // ctx: { today, now, categories, subtasksOf, showTimes, draggable, showDate,
 //        showOriginalDate, showParent, compact, keyPrefix, parentOf }
+// In the Today list: the "before" reminder of the task being worked on, and
+// the gratitude reminder of a completed task until it has been ticked. Both
+// remain available in the task's details.
+function inlineReminder(task) {
+  const timing = trackingIndex().open?.taskId === task.id;
+  if (timing && task.status === STATUS.OPEN) {
+    const before = task.reminders?.before;
+    const item = reminderItem(before?.itemId);
+    return item ? renderReminder(item, { checked: !!before.checked, target: { taskId: task.id, moment: 'before' }, compact: true }) : null;
+  }
+  const after = task.reminders?.after;
+  if (task.status === STATUS.DONE && after && !after.checked) {
+    return renderReminder(reminderItem(after.itemId), { checked: false, target: { taskId: task.id, moment: 'after' }, compact: true });
+  }
+  return null;
+}
+
 export function renderTaskBlock(task, ctx) {
   if (task.parentTaskId) {
     // Subtasks listed on their own (e.g. Upcoming deadlines).
@@ -264,6 +283,7 @@ export function renderTaskBlock(task, ctx) {
     'div',
     { class: 'task-block', dataset: { dragItem: ctx.draggable ? 'task' : null, id: task.id } },
     renderRow(task, ctx, { subtasks, expanded, draggable: ctx.draggable }),
+    ctx.showReminders ? inlineReminder(task) : null,
     expanded ? renderSubtaskList(task, subtasks, ctx) : null,
   );
 }

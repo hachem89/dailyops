@@ -79,6 +79,36 @@ Weekly or monthly, optionally filtered by category, computed locally:
   (skipped days do not break a streak)
 - **Task insights**: overdue work and tasks that were postponed or moved repeatedly
 
+### Islamic reminders (Phase 4)
+
+A core part of DailyOps, always on. Content is in Arabic only (never translated),
+bundled with the app — no request is made at runtime.
+
+- **42 items**: 30 from the Quran and 12 from hadith; 18 Quran, 11 dua, 4 dhikr and
+  9 gratitude items, themed for tawakkul, knowledge, work, rizq and gratitude
+- **Before a task** (when you open it or start its timer) a reminder chosen for its
+  context — study tasks get knowledge items, career and project work gets work and
+  rizq items, everything else tawakkul and dhikr
+- **After completing a task** a gratitude or remembrance reminder
+- **Today** shows one Quran reminder for the day
+- Each reminder has an optional *Recited* checkbox that never changes the task,
+  stays visible in the task's details, and never blocks anything with a popup
+- Items rotate in a fixed order without repeating until the whole pool has been
+  shown; the position is stored locally, so refreshing does not reset it
+
+**Sources and verification.** Quran text is the Tanzil "Simple" text. Hadith texts
+and grades are the six books as published on sunnah.com (via the open
+[hadith-api](https://github.com/fawazahmed0/hadith-api) dataset). Sunan items are
+included only when al-Albani graded them sahih or hasan; every recorded grade is
+shown, and each item keeps its original occasion (e.g. "said after the Fajr
+prayer"). `scripts/fetch-islamic-sources.mjs` records the source texts in
+`data/islamic-sources.json`, and `npm test` proves that every displayed text is an
+exact excerpt of its source:
+
+```bash
+node scripts/fetch-islamic-sources.mjs
+```
+
 ## Your data
 
 - Everything is stored locally in IndexedDB. Nothing about your tasks is sent anywhere.
@@ -127,6 +157,6 @@ scripts/serve.mjs     Zero-dependency local dev server
 1. ~~Functional foundation~~ — done
 2. ~~Projects and recurrence~~ — done
 3. ~~Time tracking and analytics~~ — done
-4. Islamic reminders
+4. ~~Islamic reminders~~ — done
 5. Slash commands, global search and keyboard shortcuts
 6. Backup/restore, migrations, deployment to GitHub Pages
