@@ -1582,7 +1582,8 @@ body.is-dragging * {
   margin-top: 10px;
 }
 
-.block-divider {
+/* The line inside a divider block (the block itself is .block-divider). */
+.divider-line {
   flex: 1;
   border: 0;
   border-top: 1px solid var(--border-strong);

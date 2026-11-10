@@ -302,7 +302,7 @@ function renderLayoutBlock(task, ctx) {
             'aria-label': 'Heading',
             dataset: { action: 'block-title', id: task.id, focusKey: `block:${task.id}` },
           })
-        : h('hr', { class: 'block-divider', 'aria-hidden': 'true' }),
+        : h('hr', { class: 'divider-line', 'aria-hidden': 'true' }),
       remove,
     ),
   );
