@@ -2,7 +2,7 @@
 import * as store from './core/store.js';
 import { todayKey } from './utils/dates.js';
 import { captureFocus, isTypingTarget, restoreFocus } from './utils/dom.js';
-import { seedDefaultCategories } from './domain/categories.js';
+import { applySuggestedCategoryRenames, seedDefaultCategories } from './domain/categories.js';
 import { arrangeGroups } from './domain/groups.js';
 import { arrangeProjectSubtasks, arrangeProjects } from './domain/projects.js';
 import { ensureOccurrences } from './domain/repeat.js';
@@ -143,6 +143,7 @@ async function start() {
   try {
     await store.init();
     await seedDefaultCategories();
+    await applySuggestedCategoryRenames();
   } catch (error) {
     showFatalError(error);
     return;

@@ -9,6 +9,7 @@ const DEFAULTS = {
   mobileNoticeDismissed: false,
   collapsed: {}, // ui section id → true when collapsed
   seededDefaults: false,
+  categoryRenamesApplied: 0, // how many suggested-category renames have run
   reminderRotation: {}, // pool key → next index (Islamic reminders)
   dailyReminder: null, // { date, itemId, checked }
   lastBackupAt: null,

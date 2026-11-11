@@ -8,7 +8,7 @@ export const CATEGORY_COLORS = ['gray', 'brown', 'orange', 'yellow', 'green', 'b
 
 const DEFAULT_CATEGORIES = [
   ['Study & Learning', 'blue'],
-  ['Quran & Spirituality', 'green'],
+  ['Ibadah', 'green'],
   ['Sports & Health', 'orange'],
   ['Career & Applications', 'purple'],
   ['Projects', 'brown'],
@@ -37,6 +37,22 @@ export async function seedDefaultCategories() {
   }));
   await store.put('categories', records);
   await setSetting('seededDefaults', true);
+}
+
+// Renames of suggested categories for people who already have them. Applied
+// once, and only while the category still has its original suggested name, so
+// a name the user chose is never overwritten.
+const SUGGESTED_RENAMES = [{ from: 'Quran & Spirituality', to: 'Ibadah' }];
+
+export async function applySuggestedCategoryRenames() {
+  const applied = getSetting('categoryRenamesApplied') ?? 0;
+  if (applied >= SUGGESTED_RENAMES.length) return;
+  for (const { from, to } of SUGGESTED_RENAMES.slice(applied)) {
+    const categories = listCategories();
+    const old = categories.find((c) => c.name === from);
+    if (old && !categories.some((c) => c.name === to)) await updateCategory(old.id, { name: to });
+  }
+  await setSetting('categoryRenamesApplied', SUGGESTED_RENAMES.length);
 }
 
 export function createCategory(name, color = 'gray') {
