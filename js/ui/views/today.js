@@ -25,6 +25,7 @@ import { renderReminder } from '../components/reminderCard.js';
 import { dailyReminder } from '../../domain/reminders.js';
 import { inputMode, setInputMode } from '../components/slashMenu.js';
 import { promptNewProject } from './projects.js';
+import { backupReminderNeeded } from '../backup.js';
 import { icon } from '../icons.js';
 import { navigate } from '../router.js';
 
@@ -88,6 +89,25 @@ function renderHeader(date, today, progress, sortMode) {
           h('span', null, `${progress.done} of ${progress.total} done`),
         )
       : null,
+  );
+}
+
+function renderBackupReminder() {
+  if (!backupReminderNeeded()) return null;
+  return h(
+    'div',
+    { class: 'notice', role: 'note' },
+    icon('archive'),
+    h(
+      'div',
+      { class: 'notice-body' },
+      h('strong', null, 'Time for a backup? '),
+      getSetting('lastBackupAt')
+        ? 'Your last backup is more than two weeks old. Your tasks live only in this browser.'
+        : 'Your tasks live only in this browser. A backup file keeps them safe if browser data is cleared.',
+    ),
+    h('button', { type: 'button', class: 'btn btn-sm btn-primary', dataset: { action: 'export-backup' } }, 'Download backup'),
+    h('button', { type: 'button', class: 'btn btn-sm btn-ghost', dataset: { action: 'snooze-backup-reminder' } }, 'Later'),
   );
 }
 
@@ -242,6 +262,7 @@ export function renderToday(root, { date }) {
       { class: cls('view', !manual && 'no-drag') },
       renderHeader(viewDate, today, dayProgress(tasks, viewDate), sortMode),
       renderMobileNotice(),
+      viewDate === today ? renderBackupReminder() : null,
       viewDate === today ? renderDailyReminder() : null,
 
       overdue.length

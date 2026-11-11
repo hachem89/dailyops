@@ -11,6 +11,9 @@ const DEFAULTS = {
   seededDefaults: false,
   reminderRotation: {}, // pool key → next index (Islamic reminders)
   dailyReminder: null, // { date, itemId, checked }
+  lastBackupAt: null,
+  backupSnoozedUntil: null,
+  countVisits: true, // visitor may opt out of anonymous visit counting
 };
 
 export function getSetting(key) {

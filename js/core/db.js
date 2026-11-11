@@ -112,6 +112,18 @@ export function deleteMany(storeName, keys) {
   });
 }
 
+// Replaces the contents of every store in one transaction: if anything fails,
+// the browser rolls the whole transaction back and the existing data is kept.
+export function replaceAllStores(dataByStore) {
+  return transaction(STORES, 'readwrite', (tx) => {
+    for (const name of STORES) {
+      const store = tx.objectStore(name);
+      store.clear();
+      (dataByStore[name] || []).forEach((record) => store.put(record));
+    }
+  });
+}
+
 export function clearStores(storeNames = STORES) {
   return transaction(storeNames, 'readwrite', (tx) => {
     storeNames.forEach((name) => tx.objectStore(name).clear());

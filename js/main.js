@@ -25,6 +25,8 @@ import { initShortcuts } from './ui/shortcuts.js';
 import { promptNewProject } from './ui/views/projects.js';
 import { runSlashCommand } from './ui/views/today.js';
 import { rescheduleTask } from './domain/tasks.js';
+import { countVisit } from './ui/visits.js';
+import './ui/backup.js';
 import { formatFriendlyDate } from './utils/dates.js';
 import { applyTheme, watchSystemTheme } from './ui/theme.js';
 import { renderArchive } from './ui/views/archive.js';
@@ -181,6 +183,7 @@ async function start() {
 
   render();
   startLiveClock();
+  countVisit();
   loadStorageInfo().then(() => route.name === 'settings' && render());
 }
 

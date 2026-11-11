@@ -10,8 +10,10 @@ import { toast } from '../components/toast.js';
 import { icon } from '../icons.js';
 import { ISLAMIC_CONTENT } from '../../content/islamic.js';
 import { SHORTCUTS, shortcutKeys } from '../shortcuts.js';
+import { APP_VERSION } from '../backup.js';
+import { visitCountingStatus } from '../visits.js';
+import { formatTimestamp } from '../../utils/dates.js';
 
-export const APP_VERSION = '0.5.0';
 
 const storageInfo = { persisted: null, usage: null };
 
@@ -40,6 +42,37 @@ export function renderSettings(root) {
       'div',
       { class: 'view' },
       h('header', { class: 'view-header' }, h('h1', { class: 'view-title' }, 'Settings')),
+
+      h(
+        'section',
+        { class: 'settings-section', id: 'backup' },
+        h('h2', null, 'Backup and restore'),
+        h(
+          'p',
+          null,
+          'Your data exists only in this browser. Download a backup regularly and keep the file somewhere safe. A backup can be restored here or on another device.',
+        ),
+        h(
+          'div',
+          { class: 'backup-actions' },
+          h('button', { type: 'button', class: 'btn btn-primary', dataset: { action: 'export-backup' } }, icon('archive'), 'Download backup'),
+          h('button', { type: 'button', class: 'btn', dataset: { action: 'choose-backup-file' } }, icon('undo'), 'Restore from backup…'),
+          h('input', {
+            type: 'file',
+            id: 'backup-file',
+            accept: 'application/json,.json',
+            hidden: true,
+            'aria-label': 'Choose a backup file',
+            dataset: { action: 'import-backup' },
+          }),
+        ),
+        h(
+          'p',
+          { class: 'faint', style: { marginTop: '8px', marginBottom: 0 } },
+          getSetting('lastBackupAt') ? `Last backup: ${formatTimestamp(getSetting('lastBackupAt'))}` : 'No backup downloaded yet on this device.',
+          ' Restoring shows what the file contains first; you can merge it with your current data or replace everything.',
+        ),
+      ),
 
       h(
         'section',
@@ -149,7 +182,7 @@ export function renderSettings(root) {
           h('li', null, 'Data is not synchronized between devices or browsers. Each one keeps its own separate copy.'),
           h('li', null, 'Clearing this browser’s site data, or using a private window, can erase your tasks.'),
           h('li', null, 'No task, project or note is ever sent to an external service.'),
-          h('li', null, 'Backup export and restore (JSON) are planned for the release phase and will appear here.'),
+          h('li', null, 'Use Backup and restore above to keep a copy or move your data to another device.'),
         ),
         h(
           'dl',
@@ -176,6 +209,7 @@ export function renderSettings(root) {
         ),
       ),
 
+      renderPrivacySection(),
       h(
         'section',
         { class: 'settings-section' },
@@ -201,12 +235,58 @@ export function renderSettings(root) {
   );
 }
 
+function renderPrivacySection() {
+  const visits = visitCountingStatus();
+  let visitText;
+  if (!visits.configured) visitText = 'Not enabled on this site. No request is made.';
+  else if (visits.localHost) visitText = `${visits.provider}. Not counted on this local development host.`;
+  else if (visits.browserSignal) visitText = `${visits.provider}. Your browser asks not to be tracked, so your visits are not counted.`;
+  else if (visits.optedOut) visitText = `${visits.provider}. You turned counting off on this device.`;
+  else visitText = `${visits.provider}. One anonymous request per visit.`;
+  return h(
+    'section',
+    { class: 'settings-section' },
+    h('h2', null, 'Privacy'),
+    h(
+      'ul',
+      { class: 'info-list' },
+      h('li', null, 'Tasks, projects, notes, time records, reminders and settings never leave this browser unless you download a backup yourself.'),
+      h('li', null, 'Islamic reminders are bundled with the app; reading them makes no request and nothing about them is recorded outside this device.'),
+      h(
+        'li',
+        null,
+        'Optional visit counting lets the site owner see roughly how many people visit. It sends only a fixed page path ("/") and the page title — no content of yours. The counting service sees your IP address and browser user agent with the request, uses them to tell visits apart without storing them, and keeps only aggregate counts such as browser, operating system and country. There are no accounts, so these numbers are visits, not users.',
+      ),
+    ),
+    h(
+      'dl',
+      { class: 'kv', style: { marginTop: '12px' } },
+      h('dt', null, 'Visit counting'),
+      h('dd', null, visitText),
+    ),
+    visits.configured
+      ? h(
+          'div',
+          { class: 'setting-row' },
+          h('div', { class: 'setting-label' }, 'Count my visits anonymously', h('small', null, 'Applies to this browser only.')),
+          h(
+            'label',
+            { class: 'switch' },
+            h('input', { type: 'checkbox', checked: !visits.optedOut, dataset: { action: 'toggle-count-visits' } }),
+            'Count',
+          ),
+        )
+      : null,
+  );
+}
+
 export function loadStorageInfo() {
   return refreshStorageInfo();
 }
 
 registerActions({
   'set-theme': (el) => setSetting('theme', el.dataset.value),
+  'toggle-count-visits': (el) => setSetting('countVisits', el.checked),
   'set-default-priority': (el) => setSetting('defaultPriority', Number(el.value)),
   'toggle-show-times': (el) => setSetting('showExecutionTimes', el.checked),
   'rename-category': (el) => {
