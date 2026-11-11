@@ -192,10 +192,15 @@ export function renderSettings(root) {
             'dd',
             null,
             storageInfo.persisted === true
-              ? 'Granted — the browser will not evict this data automatically.'
+              ? 'Granted — the browser will not delete this data on its own to free up space.'
               : storageInfo.persisted === false
-                ? ['Not granted. ', h('button', { type: 'button', class: 'btn btn-sm', dataset: { action: 'request-persist' } }, 'Request persistent storage')]
-                : 'Unknown in this browser.',
+                ? [
+                    'Not granted. When a device runs low on space, the browser may delete data of sites without this protection. ',
+                    'It never protects against clearing browsing data yourself, so backups still matter. ',
+                    'Chrome and Edge decide automatically (usually for sites you bookmark, install or use often) and may decline at first; Firefox asks you. ',
+                    h('button', { type: 'button', class: 'btn btn-sm', dataset: { action: 'request-persist' } }, 'Ask the browser again'),
+                  ]
+                : 'Not supported by this browser.',
           ),
           h('dt', null, 'Storage used'),
           h('dd', null, storageInfo.usage != null ? `${(storageInfo.usage / 1024).toFixed(1)} KB` : 'Unknown'),
@@ -319,7 +324,12 @@ registerActions({
   'request-persist': async () => {
     const granted = await navigator.storage?.persist?.();
     await refreshStorageInfo();
-    toast(granted ? 'Persistent storage granted' : 'The browser declined persistent storage');
+    toast(
+      granted
+        ? 'Persistent storage granted: the browser will not delete DailyOps data to free up space.'
+        : 'Not granted for now. Chrome and Edge grant this automatically once you use, bookmark or install the site; your data is stored either way.',
+      { duration: 9000 },
+    );
     ui.render();
   },
   'delete-all-data': async () => {
