@@ -1655,8 +1655,20 @@ kbd {
   white-space: nowrap;
 }
 
-.search-link kbd {
+.search-link .nav-kbd {
+  flex: none;
   margin-left: auto;
+}
+
+.app.sidebar-collapsed .sidebar .nav-kbd {
+  display: none;
+}
+
+/* Touch screens have no keyboard shortcut to show. */
+@media (pointer: coarse) {
+  .search-link .nav-kbd {
+    display: none;
+  }
 }
 
 .search-dialog {

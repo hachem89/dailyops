@@ -50,7 +50,7 @@ export function renderSidebar(root, route) {
         { type: 'button', class: 'nav-link search-link', dataset: { action: 'open-search' }, title: 'Search (Ctrl+K)' },
         icon('search'),
         h('span', { class: 'label' }, 'Search'),
-        h('kbd', { class: 'label' }, /Mac|iPhone|iPad/.test(navigator.platform || '') ? '⌘K' : 'Ctrl K'),
+        h('kbd', { class: 'nav-kbd' }, /Mac|iPhone|iPad/.test(navigator.platform || '') ? '⌘K' : 'Ctrl K'),
       ),
     ),
     h(
