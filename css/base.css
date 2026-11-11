@@ -62,6 +62,27 @@ button:disabled {
   display: none !important;
 }
 
+.skip-link {
+  position: fixed;
+  left: 12px;
+  top: -48px;
+  z-index: 500;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+  transition: top 0.15s;
+}
+
+.skip-link:focus {
+  top: 12px;
+}
+
+#view-root:focus {
+  outline: none;
+}
+
 .visually-hidden {
   position: absolute !important;
   width: 1px;

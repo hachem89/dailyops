@@ -26,6 +26,7 @@
     <script type="module" src="js/main.js"></script>
   </head>
   <body>
+    <a class="skip-link" href="#view-root">Skip to content</a>
     <div class="app" id="app">
       <aside class="sidebar" id="sidebar" aria-label="Sidebar"></aside>
       <div class="scrim scrim-nav" id="scrim-nav"></div>
@@ -37,7 +38,7 @@
           <span>DailyOps</span>
         </div>
         <div class="timer-bar" id="timer-bar" hidden></div>
-        <div id="view-root">
+        <div id="view-root" tabindex="-1">
           <div class="view"><p class="faint">Loading…</p></div>
         </div>
       </main>

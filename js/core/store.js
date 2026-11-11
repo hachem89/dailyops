@@ -21,13 +21,33 @@ function notify() {
   });
 }
 
-export async function init() {
-  await db.openDatabase();
+async function loadCache() {
   for (const name of db.STORES) {
     const records = await db.getAll(name);
     cache[name].clear();
     records.forEach((record) => cache[name].set(keyOf(name, record), record));
   }
+}
+
+export async function init() {
+  await db.openDatabase();
+  await loadCache();
+}
+
+export function snapshot() {
+  return Object.fromEntries(db.STORES.map((name) => [name, all(name)]));
+}
+
+// Atomically replaces all data (used by backup restore), then reloads memory.
+export async function replaceAll(dataByStore) {
+  try {
+    await db.replaceAllStores(dataByStore);
+  } catch (error) {
+    errorHandler(error);
+    throw error;
+  }
+  await loadCache();
+  notify();
 }
 
 export function all(storeName) {

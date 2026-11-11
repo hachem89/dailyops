@@ -140,8 +140,56 @@ node scripts/fetch-islamic-sources.mjs
 
 - Everything is stored locally in IndexedDB. Nothing about your tasks is sent anywhere.
 - Data is **not synchronized** between devices or browsers.
-- Clearing site data in your browser **erases** your DailyOps data.
-- JSON backup export/import is planned (Phase 6). Until then, avoid clearing site data.
+- Clearing site data in your browser **erases** your DailyOps data — keep backups.
+
+### Backup and restore
+
+**Settings → Backup and restore**:
+
+- **Download backup** saves one JSON file (`dailyops-backup-YYYY-MM-DD.json`) with
+  every task, project, series, time session, group, category and setting, plus the
+  creation date, app version and data (schema) version.
+- **Restore from backup** validates the file *before* changing anything, shows what
+  it contains, and offers:
+  - **Merge** (default) — adds what is missing; nothing you have now changes.
+  - **Replace** — replaces everything after a confirmation; by default a backup of
+    your current data is downloaded first.
+- The restore is written in a single database transaction, so a failure leaves your
+  data untouched. Backups from older versions are upgraded automatically; backups
+  from a newer version are refused rather than guessed at.
+- A gentle, snoozable notice on Today suggests a backup when you have never made
+  one or the last one is more than two weeks old.
+
+Database schema changes are numbered IndexedDB migrations in `js/core/db.js`
+(currently version 3); backup files are upgraded by `upgradeBackupData` in
+`js/domain/backup.js`.
+
+## Privacy
+
+See [PRIVACY.md](PRIVACY.md). In short: no accounts, no cloud, no third-party
+scripts or fonts. Optional, anonymous visit counting (GoatCounter) is **off** unless
+the site owner sets `goatcounterCode` in [`js/config.js`](js/config.js); it sends
+only a constant path and title, skips local hosts, Do Not Track and Global Privacy
+Control, and each visitor can turn it off in Settings. Visit counts are visits, not
+users — there are no user accounts.
+
+## Deploying to GitHub Pages
+
+The repository includes a workflow (`.github/workflows/pages.yml`) that runs the
+tests and then publishes only the app files (`index.html`, `css/`, `js/`,
+`assets/`) on every push to `main`.
+
+1. On GitHub, open **Settings → Pages** and set **Source** to **GitHub Actions**
+   (one time).
+2. Push to `main`, or run the workflow manually from the **Actions** tab.
+3. The site appears at `https://<user>.github.io/<repository>/`.
+
+All paths are relative and routing uses the URL hash, so the app works from a
+repository sub-path without any server configuration.
+
+To enable anonymous visit counting, create a site on
+[goatcounter.com](https://www.goatcounter.com), put its code in `js/config.js`
+and push.
 
 ## Running locally
 
@@ -158,8 +206,9 @@ Then open <http://localhost:5173>. Any static server works (for example
 
 ## Tests
 
-Pure domain logic (dates, deadlines, ordering, task queries) is covered by Node's
-built-in test runner (Node 21+):
+Pure domain logic (dates, deadlines, ordering, recurrence, analytics, search,
+backups, reminder rotation) and the Islamic source verification are covered by
+Node's built-in test runner (Node 21+); the same tests run in CI before deployment:
 
 ```bash
 npm test
@@ -171,12 +220,17 @@ npm test
 index.html            App shell
 css/                  Design tokens, layout, components, task styles
 js/main.js            Bootstrap: load data, render on change
+js/config.js          Public site configuration (optional visit counting)
+js/content/           Bundled, verified Islamic reminder collection
+data/                 Recorded primary-source texts used by the content tests
 js/core/              IndexedDB (versioned migrations) and the in-memory store
 js/domain/            Tasks, groups, categories, settings; pure queries and rules
 js/ui/                Router, sidebar, theme, drag and drop, components, views
 js/utils/             Dates, DOM helpers, ids
 tests/                node:test unit tests for the pure domain modules
 scripts/serve.mjs     Zero-dependency local dev server
+scripts/fetch-islamic-sources.mjs   Re-records the Quran/hadith source texts
+.github/workflows/    Tests and GitHub Pages deployment
 ```
 
 ## Roadmap
@@ -186,4 +240,4 @@ scripts/serve.mjs     Zero-dependency local dev server
 3. ~~Time tracking and analytics~~ — done
 4. ~~Islamic reminders~~ — done
 5. ~~Slash commands, global search and keyboard shortcuts~~ — done
-6. Backup/restore, migrations, deployment to GitHub Pages
+6. ~~Backup/restore, migrations, accessibility, privacy and deployment to GitHub Pages~~ — done (v0.6.0)

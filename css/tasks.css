@@ -1766,3 +1766,47 @@ kbd {
 .shortcut-dialog {
   width: min(520px, calc(100vw - 32px));
 }
+
+/* Backup */
+.backup-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.restore-dialog {
+  width: min(520px, calc(100vw - 32px));
+}
+
+.backup-counts {
+  font-size: 13px;
+}
+
+.backup-errors,
+.backup-warnings {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13.5px;
+}
+
+.backup-errors {
+  color: var(--danger);
+}
+
+.backup-warnings {
+  color: var(--warn);
+}
+
+.notice .btn {
+  flex: none;
+}
+
+@media (max-width: 768px) {
+  .notice {
+    flex-wrap: wrap;
+  }
+
+  .notice .notice-body {
+    flex-basis: calc(100% - 30px);
+  }
+}

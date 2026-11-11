@@ -25,6 +25,8 @@ import { initShortcuts } from './ui/shortcuts.js';
 import { promptNewProject } from './ui/views/projects.js';
 import { runSlashCommand } from './ui/views/today.js';
 import { rescheduleTask } from './domain/tasks.js';
+import { countVisit } from './ui/visits.js';
+import './ui/backup.js';
 import { formatFriendlyDate } from './utils/dates.js';
 import { applyTheme, watchSystemTheme } from './ui/theme.js';
 import { renderArchive } from './ui/views/archive.js';
@@ -160,6 +162,11 @@ async function start() {
   initShortcuts({ newProject: () => promptNewProject() });
   document.addEventListener('keydown', onKeydown);
   document.getElementById('scrim-nav').addEventListener('click', () => app.classList.remove('sidebar-open'));
+  // The app routes by URL hash, so the skip link moves focus instead of navigating.
+  document.querySelector('.skip-link').addEventListener('click', (event) => {
+    event.preventDefault();
+    viewRoot.focus();
+  });
 
   window.addEventListener('hashchange', () => {
     route = parseHash();
@@ -181,6 +188,7 @@ async function start() {
 
   render();
   startLiveClock();
+  countVisit();
   loadStorageInfo().then(() => route.name === 'settings' && render());
 }
 
